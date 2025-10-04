@@ -60,8 +60,9 @@ export default function PairScreen() {
             <Text style={styles.sectionLabel}>Filter</Text>
             <View style={styles.chipsRow}>
               <Chip label="All" active={filter==='all'} onPress={() => setFilter('all')} />
-              <Chip label="👎 Avoid" active={filter==='avoid'} onPress={() => setFilter('avoid')} />
-              <Chip label="👍 Benefit" active={filter==='benefit'} onPress={() => setFilter('benefit')} />
+              <Chip label="⚠️ Avoid" active={filter==='avoid'} onPress={() => setFilter('avoid')} />
+              <Chip label="🌿 Recommended" active={filter==='benefit'} onPress={() => setFilter('benefit')} />
+
             </View>
           </View>
 
