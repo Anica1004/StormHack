@@ -1,17 +1,56 @@
 // app/(tabs)/pair.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // ← add
+const STORAGE_KEY = 'eatwise:recent_pair_searches';
+const MAX_RECENTS = 8;
 
 export const options = { headerShown: false };
 
 export default function PairScreen() {
   const [filter, setFilter] = useState<'all' | 'avoid' | 'benefit'>('all');
   const [query, setQuery] = useState('');
+  const [recents, setRecents] = useState<string[]>([]); 
 
-  const onSearch = () => {
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (raw) setRecents(JSON.parse(raw));
+      } catch (e) {
+        console.warn('Failed to load recents', e);
+      }
+    })();
+  }, []);
+
+  const persistRecents = async (next: string[]) => {
+    setRecents(next);
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch (e) {
+      console.warn('Failed to save recents', e);
+    }
+  };
+
+  const addRecent = async (text: string) => {
+    const t = text.trim();
+    if (!t) return;
+    // de-dupe (case-insensitive), most-recent-first, cap length
+    const next = [t, ...recents.filter(r => r.toLowerCase() !== t.toLowerCase())].slice(0, MAX_RECENTS);
+    await persistRecents(next);
+  };
+
+  const clearRecents = async () => {
+    await persistRecents([]);
+  };
+
+  const onSearch = async () => {
+    const q = query.trim();
+    if (!q) return;
+    await addRecent(q);
     console.log('Searching for', query, 'filter', filter);
   };
 
@@ -36,8 +75,10 @@ export default function PairScreen() {
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 120 }}>
-    
+         
+         
           <View style={styles.card}>
+            
             <Text style={styles.cardTitle}>Find what pairs with</Text>
             <View style={styles.searchBox}>
               <Ionicons name="search" size={18} style={styles.searchIcon} />
@@ -55,7 +96,6 @@ export default function PairScreen() {
             </View>
           </View>
 
-          {/* Filter */}
           <View style={styles.card}>
             <Text style={styles.sectionLabel}>Filter</Text>
             <View style={styles.chipsRow}>
@@ -66,20 +106,43 @@ export default function PairScreen() {
             </View>
           </View>
 
-          {/* Recent: I am going to be using mock data for now... */}
+          {/* Filter */}
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>Recent</Text>
-            {['example 1','example 2','example 3'].map((item, i) => (
-              <Pressable
-                key={i}
-                style={({ pressed }) => [styles.recentRow, pressed && styles.rowPressed]}
-                onPress={() => { setQuery(item); onSearch(); }}
-              >
-                <Text style={styles.recentText}>{item}</Text>
-                <Ionicons name="chevron-forward" size={18} />
-              </Pressable>
-            ))}
-          </View>
+  <View
+    style={{
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }}
+  >
+    <Text style={styles.sectionLabel}>Recent Searches</Text>
+    {recents.length > 0 && (
+      <Pressable onPress={clearRecents}>
+        <Text style={{ fontWeight: '600', color: '#2563EB' }}>Clear</Text>
+      </Pressable>
+    )}
+  </View>
+
+  {recents.length === 0 ? (
+    <Text style={{ color: '#6B7280', fontSize: 15, paddingVertical: 12 }}>
+      No search history found yet
+    </Text>
+  ) : (
+    recents.map((item, i) => (
+      <Pressable
+        key={i}
+        style={({ pressed }) => [styles.recentRow, pressed && styles.rowPressed]}
+        onPress={() => {
+          setQuery(item);
+          onSearch();
+        }}
+      >
+        <Text style={styles.recentText}>{item}</Text>
+        <Ionicons name="chevron-forward" size={18} />
+      </Pressable>
+    ))
+  )}
+</View>
         </ScrollView>
 
         {/* Footer */}
