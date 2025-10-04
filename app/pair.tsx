@@ -108,26 +108,41 @@ export default function PairScreen() {
 
           {/* Filter */}
           <View style={styles.card}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={styles.sectionLabel}>Recent</Text>
-              {recents.length > 0 && (
-                <Pressable onPress={clearRecents}>
-                  <Text style={{ fontWeight: '600', color: '#2563EB' }}>Clear</Text>
-                </Pressable>
-              )}
-            </View>
+  <View
+    style={{
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }}
+  >
+    <Text style={styles.sectionLabel}>Recent Searches</Text>
+    {recents.length > 0 && (
+      <Pressable onPress={clearRecents}>
+        <Text style={{ fontWeight: '600', color: '#2563EB' }}>Clear</Text>
+      </Pressable>
+    )}
+  </View>
 
-            {(recents.length ? recents : ["Try: Milk"]).map((item, i) => (
-              <Pressable
-                key={i}
-                style={({ pressed }) => [styles.recentRow, pressed && styles.rowPressed]}
-                onPress={() => { setQuery(item); /* optionally auto-search */ onSearch(); }}
-              >
-                <Text style={styles.recentText}>{item}</Text>
-                <Ionicons name="chevron-forward" size={18} />
-              </Pressable>
-            ))}
-          </View>
+  {recents.length === 0 ? (
+    <Text style={{ color: '#6B7280', fontSize: 15, paddingVertical: 12 }}>
+      No search history found yet
+    </Text>
+  ) : (
+    recents.map((item, i) => (
+      <Pressable
+        key={i}
+        style={({ pressed }) => [styles.recentRow, pressed && styles.rowPressed]}
+        onPress={() => {
+          setQuery(item);
+          onSearch();
+        }}
+      >
+        <Text style={styles.recentText}>{item}</Text>
+        <Ionicons name="chevron-forward" size={18} />
+      </Pressable>
+    ))
+  )}
+</View>
         </ScrollView>
 
         {/* Footer */}
