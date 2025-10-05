@@ -171,13 +171,15 @@ export default function WellnessScreen() {
   };
 
   const ClearAll = () => {
-    setFilter('all');
+    setMode(undefined);      // <- this deselects Daily/Chronic chips
+    setFilter(null);         // <- this deselects Recommended/Avoid/All chips
     setInputOpen(false);
     setQuery('');
     setInputFocused(false);
     setErrorMsg(null);
     setResult(null);
   };
+  
 
   const canSearch = query.trim().length > 0;
 
@@ -305,21 +307,30 @@ export default function WellnessScreen() {
                     label="Recommended"
                     variant="benefit"
                     active={filter === 'benefit'}
-                    onPress={() => setFilter('benefit')}
+                    onPress={() => {
+                        setFilter('benefit');
+                        setInputOpen(true);
+                      }}
                   />
                   <FilterChip
                     emoji="⚠️"
                     label="Avoid"
                     variant="avoid"
                     active={filter === 'avoid'}
-                    onPress={() => setFilter('avoid')}
+                    onPress={() => {
+                        setFilter('avoid');
+                        setInputOpen(true);
+                      }}
                   />
                   <FilterChip
                     emoji="🗂️"
                     label="All"
                     variant="all"
                     active={filter === 'all'}
-                    onPress={() => setFilter('all')}
+                    onPress={() => {
+                        setFilter('all');
+                        setInputOpen(true);
+                      }}
                   />
                 </View>
 
@@ -758,7 +769,7 @@ const styles = StyleSheet.create({
 
   // “For my”
   kicker: {
-    fontSize: 28,
+    fontSize: 32,
     color: '#0F172A',
     fontFamily: 'PretendardJP-Light',
     textAlign: 'left',
@@ -766,14 +777,20 @@ const styles = StyleSheet.create({
   },
 
   // mode chips row
-  modeRow: { flexDirection: 'row', gap: 12, marginBottom: 18 },
+  modeRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   modeChip: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
     borderWidth: 1,
+    ...webOnly({
+      outlineStyle: 'none',
+      WebkitTapHighlightColor: 'transparent',
+      userSelect: 'none',
+      cursor: 'pointer',
+    }),
   },
-  modeChipText: { fontSize: 15 },
+  modeChipText: { fontSize: 16 },
 
   // filter chips
   chip: {
@@ -788,7 +805,7 @@ const styles = StyleSheet.create({
       cursor: 'pointer',
     }),
   },
-  chipText: { fontSize: 14 },
+ chipText: { fontSize: 16},
 
   // prompt row
   bigPrompt: {
@@ -799,7 +816,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   bigPromptText: {
-    fontSize: 28,
+    fontSize: 32,
     color: '#0F172A',
     fontFamily: 'PretendardJP-Light',
   },
