@@ -1,0 +1,19 @@
+diseaseName,ingredientName,label,url,diKey
+Iron-deficiency anemia,Iron-Fortified Cereal,NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,Iron-deficiency anemia | Iron-Fortified Cereal
+Iron-deficiency anemia,Iron-Fortified Cereal,Health Canada – Canada’s Food Guide,https://food-guide.canada.ca/en/,Iron-deficiency anemia | Iron-Fortified Cereal
+Iron-deficiency anemia,Orange Juice,NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,Iron-deficiency anemia | Orange Juice
+Iron-deficiency anemia,Orange Juice,NIH ODS – Vitamin C (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/VitaminC-HealthProfessional/,Iron-deficiency anemia | Orange Juice
+Osteoporosis,Salmon,NIH ODS – Vitamin D (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/VitaminD-HealthProfessional/,Osteoporosis | Salmon
+Osteoporosis,Salmon,Health Canada – Canada’s Food Guide,https://food-guide.canada.ca/en/,Osteoporosis | Salmon
+Osteoporosis,Milk,NIH ODS – Calcium (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Calcium-HealthProfessional/,Osteoporosis | Milk
+Osteoporosis,Milk,Health Canada – Canada’s Food Guide,https://food-guide.canada.ca/en/,Osteoporosis | Milk
+Hypertriglyceridemia,Salmon,American Heart Association – Fish & Omega‑3,https://www.heart.org/en/healthy-living/healthy-eating/eat-smart/fats/fish-and-omega-3-fatty-acids,Hypertriglyceridemia | Salmon
+Hypertriglyceridemia,Salmon,Health Canada – Canada’s Food Guide,https://food-guide.canada.ca/en/,Hypertriglyceridemia | Salmon
+Type 2 diabetes,Lentils,American Diabetes Association – Carbohydrates & diabetes,https://diabetes.org/food-nutrition/understanding-carbs,Type 2 diabetes | Lentils
+Type 2 diabetes,Lentils,Health Canada – Canada’s Food Guide,https://food-guide.canada.ca/en/,Type 2 diabetes | Lentils
+Hypertension,Kale,NHLBI – DASH Eating Plan,https://www.nhlbi.nih.gov/education/dash-eating-plan,Hypertension | Kale
+Hypertension,Kale,Health Canada – Canada’s Food Guide,https://food-guide.canada.ca/en/,Hypertension | Kale
+Gastroesophageal reflux disease (GERD),Lemon Juice,NHS – Acid reflux (heartburn): foods & lifestyle,https://www.nhs.uk/conditions/heartburn-and-acid-reflux/,Gastroesophageal reflux disease (GERD) | Lemon Juice
+Gout,Beef,NHS – Gout: causes & diet,https://www.nhs.uk/conditions/gout/,Gout | Beef
+Type 2 diabetes,Orange Juice,Diabetes Canada – Sugary drinks & diabetes,https://www.diabetes.ca/healthy-living-resources/diet-nutrition/sugary-drinks,Type 2 diabetes | Orange Juice
+Type 2 diabetes,Orange Juice,American Diabetes Association – Carbohydrates & diabetes,https://diabetes.org/food-nutrition/understanding-carbs,Type 2 diabetes | Orange Juice
