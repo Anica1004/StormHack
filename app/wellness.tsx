@@ -597,32 +597,49 @@ function ResultAccordion({ rows }: { rows: Row[] }) {
 
 /** ===== Small UI atoms ===== */
 function ModeChip({
-  emoji,
-  label,
-  active,
-  onPress,
-}: {
-  emoji: string;
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.modeChip,
-        active ? styles.modeChipOn : styles.modeChipOff,
-      ]}
-      android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
-      {...webOnly({ role: 'button' })}
-    >
-      <Text style={[styles.modeChipText, active ? styles.modeChipTextOn : styles.modeChipTextOff]}>
-        {emoji} {label}
-      </Text>
-    </Pressable>
-  );
-}
+    emoji,
+    label,
+    active,
+    onPress,
+  }: {
+    emoji: string;
+    label: string;
+    active: boolean;
+    onPress: () => void;
+  }) {
+    const isDaily = label.toLowerCase().includes('daily');
+    const bgColor = active
+      ? isDaily
+        ? '#FFF4E5' 
+        : '#E5E7EB' 
+      : '#FFFFFF';
+    const borderColor = active
+      ? isDaily
+        ? '#F97316'
+        : '#9CA3AF'
+      : '#E5E7EB';
+    const textColor = active
+      ? isDaily
+        ? '#C2410C' 
+        : '#374151' 
+      : '#6B7280'; 
+  
+    return (
+      <Pressable
+        onPress={onPress}
+        style={[
+          styles.modeChip,
+          { backgroundColor: bgColor, borderColor: borderColor },
+        ]}
+        android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
+        {...webOnly({ role: 'button' })}
+      >
+        <Text style={[styles.modeChipText, { color: textColor }]}>
+          {emoji} {label}
+        </Text>
+      </Pressable>
+    );
+  }
 
 function FilterChip({
   emoji,
@@ -730,7 +747,7 @@ const styles = StyleSheet.create({
   },
   modeChipOn: { backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' },
   modeChipOff: { backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' },
-  modeChipText: { fontSize: 15, fontWeight: '600' },
+  modeChipText: { fontSize: 15 },
   modeChipTextOn: { color: '#0F172A' },
   modeChipTextOff: { color: '#6B7280' },
 
