@@ -403,12 +403,12 @@ function ResultView({
   return (
     <View style={[styles.bigCard, { paddingBottom: 16, minHeight: undefined }]}>
       {/* Back chip */}
-      <Pressable
-        onPress={onBack}
-        style={{ alignSelf: 'flex-start', padding: 8, borderRadius: 999, backgroundColor: '#F3F4F6', marginBottom: 8 }}
-      >
-        <Ionicons name="chevron-back" size={20} color="#111827" />
-      </Pressable>
+      <Pressable onPress={onBack} style={{ alignSelf: 'flex-start', padding: 8, marginTop: 5, borderRadius: 999, backgroundColor: '#F3F4F6', marginBottom: 8 }} > <Ionicons name="chevron-back" size={20} color="#111827" /> </Pressable>
+
+      <Text style={[styles.title, { textAlign: 'center' }]}>
+        pairings with{'\n'}
+        <Text style={{ textDecorationLine: 'underline' }}>{result.ingredient || query}</Text>
+      </Text>
 
       {(filter === 'all' || filter == null) ? (
   <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
@@ -493,10 +493,7 @@ function ResultView({
       
 
       {/* Title */}
-      <Text style={[styles.headerTitle, { textAlign: 'center' }]}>
-        pairings with{'\n'}
-        <Text style={{ textDecorationLine: 'underline' }}>{result.ingredient || query}</Text>
-      </Text>
+   
 
       {/* Accordion list */}
       <ResultAccordion rows={rows} />
@@ -703,7 +700,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingHorizontal: 20,
-    paddingTop: 60,
+   
     marginTop: 12,
     shadowColor: '#000',
     shadowOpacity: 0.06,
@@ -713,7 +710,8 @@ const styles = StyleSheet.create({
   },
 
   // header
-  headerTitle: { fontSize: 30, color: '#0F172A', fontFamily: 'PretendardJP-Light' },
+  headerTitle: { fontSize: 30,  paddingTop: 60, color: '#0F172A', fontFamily: 'PretendardJP-Light' },
+  title: { fontSize: 30, color: '#0F172A', fontFamily: 'PretendardJP-Light', marginBottom: 25},
 
   // chips
   chipsRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
