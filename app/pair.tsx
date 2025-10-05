@@ -508,7 +508,10 @@ function ResultAccordion({ rows }: { rows: Row[] }) {
       {rows.map((r, idx) => {
         const isOpen = open === idx;
         const color  = r._kind === 'good' ? '#16A34A' : '#DC2626';
-        const icon   = r._kind === 'good' ? 'checkmark-circle' : 'close-circle';
+        const icon = r._kind === 'good'
+  ? (isOpen ? 'checkmark-circle' : 'checkmark-circle-outline')
+  : (isOpen ? 'close-circle' : 'close-circle-outline');
+
         return (
           <View key={`${r.food}-${idx}`} style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 10, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E5E7EB' }}>
             <Pressable
