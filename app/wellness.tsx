@@ -198,10 +198,10 @@ export default function WellnessScreen() {
 
   const promptCopy =
     mode === 'daily'
-      ? 'Find ingredients for daily wellness'
+      ? 'Ingredients for daily wellness'
       : mode === 'chronic'
-        ? 'Find ingredients for chronic care'
-        : 'Find ingredients for...';
+        ? 'Ingredients for chronic care'
+        : 'Ingredients for...';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top','left','right','bottom']}>
@@ -270,7 +270,7 @@ export default function WellnessScreen() {
                 onBack={() => { setResult(null); ClearAll(); }}
               />
             ) : (
-              <View style={[styles.card, { minHeight: cardMinHeight }]}>
+              <View style={[styles.card, { minHeight: cardMinHeight, paddingTop: 60 }]}>
                 <Text style={styles.kicker}>I want help with</Text>
 
                 {/* Demo-only mode (placeholder/prompt copy only) */}
@@ -291,7 +291,7 @@ export default function WellnessScreen() {
 
                 <Text style={[styles.kicker, { marginTop: 14 }]}>Filter</Text>
 
-                <View style={[styles.modeRow, { marginBottom: 0 }]}>
+                <View style={[styles.modeRow, { marginBottom: 10 }]}>
                   <FilterChip
                     emoji="🌱"
                     label="Recommended"
