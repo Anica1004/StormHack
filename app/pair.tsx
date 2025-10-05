@@ -190,6 +190,13 @@ export default function PairScreen() {
             <Pressable
               style={[styles.segment, activeSeg === 'pairing' && styles.segmentActive]}
               disabled={activeSeg === 'pairing'}
+              onPress={() => {
+                if (activeSeg !== 'pairing') {
+                  setActiveSeg('pairing');
+                  router.push('/pair');
+                  // already here, so no navigation
+                }
+              }}
             >
               <Text style={[styles.segmentText, activeSeg === 'pairing' && styles.segmentTextActive]}>Pairing</Text>
             </Pressable>
