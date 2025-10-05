@@ -23,7 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BASE_URL = 'https://stormhack-backend-production.up.railway.app'; // ← deployed API
 const STORAGE_KEY = 'eatwise:recent_pair_searches';
-const MAX_RECENTS = 8;
+const MAX_RECENTS = 4;
 
 export const options = { headerShown: false };
 
