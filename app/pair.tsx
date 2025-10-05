@@ -74,7 +74,7 @@ export default function PairScreen() {
   // keep white card height stable
   const cardMinHeight = Math.max(
     0,
-    height - insets.top - insets.bottom - FOOTER_H - headerH - 12 
+    height - insets.top - insets.bottom - FOOTER_H - headerH - 30 
   );
 
   useEffect(() => {
@@ -251,7 +251,7 @@ export default function PairScreen() {
 
               {/* Arrow row — opens input */}
               <Pressable
-                style={({ pressed }) => [styles.arrowRow, pressed && { opacity: 0.9 }]}
+                style={({ pressed }) => [styles.arrowRow, { marginTop: 20 }, pressed && { opacity: 0.9 }]}
                 onPress={toggleInputOpen}
                 {...webOnly({ role: 'button' })}
               >
@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
       cursor: 'pointer',
     }),
   },
-  arrowTitle: { fontSize: 30, color: '#0F172A', fontFamily: 'PretendardJP-Light' },
+  arrowTitle: { fontSize: 30, color: '#0F172A', fontFamily: 'PretendardJP-Light', },
 
   /** Underline search field */
   searchUnderline: {
