@@ -57,7 +57,7 @@ export default function WellnessScreen() {
   const [mode, setMode] = useState<Mode>();
 
   // filter & search
-  const [filter, setFilter] = useState<Filter | null>();
+  const [filter, setFilter] = useState<Filter | null>(null);
   const [inputOpen, setInputOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [recents, setRecents] = useState<string[]>([]);
@@ -198,10 +198,10 @@ export default function WellnessScreen() {
 
   const promptCopy =
     mode === 'daily'
-      ? 'find ingredients for daily wellness'
+      ? 'Find ingredients for daily wellness'
       : mode === 'chronic'
-        ? 'find ingredients for chronic care'
-        : 'find ingredients for...';
+        ? 'Find ingredients for chronic care'
+        : 'Find ingredients for...';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top','left','right','bottom']}>
