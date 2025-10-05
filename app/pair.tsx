@@ -37,15 +37,16 @@ export default function PairScreen() {
   // focus ref
   const inputRef = useRef<TextInput>(null);
 
-  // full-height card sizing
-  const { height } = useWindowDimensions();
+  // layout helpers
   const insets = useSafeAreaInsets();
-  const FOOTER_H = 72;
-  const TABS_H = 44;
-  const verticalMargins = 12 + 16;
+  const { height } = useWindowDimensions();
+  const FOOTER_H = 60; // real footer height
+  const TABS_H = 44;   // approx top tabs zone
+
+  // make the big white card fill the remaining viewport, but not force extra scroll
   const cardMinHeight = Math.max(
     0,
-    height - insets.top - insets.bottom - FOOTER_H - TABS_H - verticalMargins
+    height - insets.top - insets.bottom - FOOTER_H - TABS_H - 16 /*top margin*/
   );
 
   useEffect(() => {
@@ -124,22 +125,29 @@ export default function PairScreen() {
         <KeyboardAvoidingView behavior={kavBehavior} style={{ flex: 1 }}>
           <ScrollView
             style={styles.scroll}
-            contentContainerStyle={{ paddingBottom: 220, flexGrow: 1 }}
+            // just enough bottom padding for the footer + a little buffer
+            contentContainerStyle={{ paddingBottom: FOOTER_H + insets.bottom + 12, flexGrow: 1 }}
             keyboardShouldPersistTaps="always"
           >
-            {/* ONE big white card fixed to screen height */}
+            {/* ONE big white card fixed to screen height (no giant interior padding) */}
             <View style={[styles.bigCard, { minHeight: cardMinHeight }]}>
               {/* Title */}
               <Text style={styles.headerTitle}>Help me find</Text>
-              {/* <Text style={styles.helperSub}>
-                Pick a filter.
-              </Text> */}
+              <Text style={{ 
+  fontSize: 15, 
+  color: '#6B7280', 
+  marginTop: 6, 
+  fontFamily: 'PretendardJP-Light' 
+}}>
+  Select a filter to guide your search.
+</Text>
+
 
               {/* Filter chips (neutral → color when selected) */}
-              <View style={[styles.chipsRow, { marginTop: 12 }]}>
+              <View style={[styles.chipsRow, { marginTop: 10 }]}>
                 <FilterChip
                   emoji="🌱"
-                  label="Good"
+                  label="Recommended"
                   variant="benefit"
                   active={filter === 'benefit'}
                   onPress={() => setFilter('benefit')}
@@ -161,7 +169,7 @@ export default function PairScreen() {
               </View>
 
               {/* Spacing */}
-              <View style={{ height: 12 }} />
+              <View style={{ height: 10 }} />
 
               {/* Arrow row — opens input */}
               <Pressable
@@ -172,7 +180,7 @@ export default function PairScreen() {
                 onPress={toggleInputOpen}
                 {...webOnly({ role: 'button' })}
               >
-                <Text style={styles.arrowTitle}>foods to pair with</Text>
+                <Text style={styles.arrowTitle}>Choose an Ingredient</Text>
                 <Ionicons
                   name="arrow-forward"
                   size={22}
@@ -184,21 +192,16 @@ export default function PairScreen() {
               {/* Collapsible input + recents */}
               {inputOpen && (
                 <View>
-                  <View
-                    style={[
-                      styles.searchBox,
-                      inputFocused && styles.searchBoxFocused,
-                      Platform.OS === 'ios' && inputFocused && styles.searchBoxGlowIOS,
-                    ]}
-                    pointerEvents="box-none"
-                  >
+                  {/* Underline style search field (like your screenshot) */}
+                  <View style={[styles.searchUnderline, inputFocused && styles.searchUnderlineFocused]}>
                     <TextInput
                       ref={inputRef}
                       autoFocus
-                      placeholder="Enter your food (e.g., milk)"
+                      placeholder="Try: Milk, Egg, etc."
+                      placeholderTextColor="#9CA3AF"
                       value={query}
                       onChangeText={setQuery}
-                      style={[styles.input, { minHeight: 44, paddingVertical: 10 }]}
+                      style={styles.inputUnderline}
                       returnKeyType="search"
                       onSubmitEditing={onSearch}
                       onFocus={() => setInputFocused(true)}
@@ -206,10 +209,16 @@ export default function PairScreen() {
                       inputMode={Platform.select({ web: 'text', default: undefined })}
                       enterKeyHint={Platform.select({ web: 'search', default: undefined })}
                     />
+                    <Ionicons
+                      name="search"
+                      size={22}
+                      color="#111827"
+                      style={styles.searchIconRight}
+                    />
                   </View>
 
                   {/* Recent Searches header */}
-                  <View style={[styles.rowBetween, { marginTop: 16 }]}>
+                  <View style={[styles.rowBetween, { marginTop: 30 }]}>
                     <Text style={styles.sectionLabel}>Recent Searches</Text>
                     {recents.length > 0 && (
                       <Pressable onPress={clearRecents} {...webOnly({ role: 'button' })}>
@@ -218,7 +227,7 @@ export default function PairScreen() {
                     )}
                   </View>
 
-                  {/* Recent list (pill rows) */}
+                  {/* Recent list (pill rows, compact, matches new style better) */}
                   {recents.length === 0 ? (
                     <Text style={styles.emptyText}>No search history yet</Text>
                   ) : (
@@ -228,7 +237,7 @@ export default function PairScreen() {
                           key={`${item}-${i}`}
                           style={({ pressed }) => [
                             styles.recentPillRow,
-                            pressed && { opacity: 0.92 },
+                            pressed && { opacity: 0.95 },
                           ]}
                           onPress={() => {
                             setQuery(item);
@@ -262,7 +271,7 @@ export default function PairScreen() {
         </KeyboardAvoidingView>
 
         {/* Footer */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, { height: FOOTER_H }]}>
           <Pressable style={styles.clearBtn} onPress={ClearAll} {...webOnly({ role: 'button' })}>
             <Text style={styles.clearText}>Clear All</Text>
           </Pressable>
@@ -347,7 +356,7 @@ function getChipColors(variant: 'all' | 'avoid' | 'benefit', active: boolean) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F5F7' },
   container: { flex: 1 },
-  scroll: { flex: 1, paddingHorizontal: 20, paddingVertical: 10, },
+  scroll: { flex: 1, paddingHorizontal: 20 },
 
   // tabs
   topTabs: {
@@ -370,12 +379,12 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 16, fontWeight: '600', color: '#6B7280' },
   tabTextActive: { color: '#111827' },
 
-  // one big card (full-screen stable)
+  // one big card (fills viewport but not overly padded)
   bigCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingHorizontal: 20,
-    paddingVertical: 50, 
+    paddingVertical: 60,
     marginTop: 12,
     shadowColor: '#000',
     shadowOpacity: 0.06,
@@ -385,8 +394,7 @@ const styles = StyleSheet.create({
   },
 
   // header
-  headerTitle: { fontSize: 28, color: '#0F172A', fontFamily: 'PretendardJP-Light' },
-  helperSub: { marginTop: 6, fontSize: 13.5, color: '#6B7280' },
+  headerTitle: { fontSize: 30, color: '#0F172A', fontFamily: 'PretendardJP-Light' },
 
   // chips
   chipsRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
@@ -406,7 +414,7 @@ const styles = StyleSheet.create({
 
   // arrow row
   arrowRow: {
-    marginTop: 12,
+    marginTop: 8,
     paddingVertical: 6,
     flexDirection: 'row',
     alignItems: 'center',
@@ -418,50 +426,54 @@ const styles = StyleSheet.create({
       cursor: 'pointer',
     }),
   },
-  arrowTitle: { fontSize: 28, color: '#0F172A', fontFamily: 'PretendardJP-Light' },
+  arrowTitle: { fontSize: 30, color: '#0F172A', fontFamily: 'PretendardJP-Light' },
 
-  // search
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    paddingHorizontal: 12,
-    height: 46,
-    backgroundColor: '#FAFAFA',
-    marginTop: 10,
-    ...webOnly({
-      outlineStyle: 'none',
-      WebkitTapHighlightColor: 'transparent',
-    }),
+  /** Underline search field (like your mock) */
+  searchUnderline: {
+    position: 'relative',
+    paddingTop: 2,
+    paddingBottom: 6,
+    borderBottomWidth: 2,
+    borderBottomColor: '#9CA3AF', // base grey
+    backgroundColor: 'transparent',
+    marginTop: 8,
   },
-  searchBoxFocused: {
-    borderColor: '#2563EB',
-    backgroundColor: '#FFFFFF',
-    ...Platform.select({ android: { elevation: 1 } }),
+  searchUnderlineFocused: {
+    borderBottomColor: '#111827', // darker on focus
   },
-  searchBoxGlowIOS: {
-    shadowColor: '#2563EB',
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-  },
-  searchIcon: { marginRight: 8, color: '#6B7280' },
-  input: {
-    flex: 1,
-    fontSize: 16,
+  inputUnderline: {
+    fontSize: 28,
+    lineHeight: 34,
     color: '#111827',
-    ...webOnly({
-      outlineStyle: 'none',
-      caretColor: '#111827',
-      WebkitTapHighlightColor: 'transparent',
+    paddingRight: 36,
+    paddingLeft: 0,
+    paddingVertical: 0,
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+        caretColor: '#111827',
+      },
     }),
   },
+  searchIconRight: {
+    position: 'absolute',
+    right: 0,
+    top: 6,
+    ...Platform.select({
+      web: { userSelect: 'none', pointerEvents: 'none' },
+    }),
+  },
+
+  // (legacy rounded box styles kept if you need elsewhere)
+  searchBox: { display: 'none' },
+  searchBoxFocused: {},
+  searchBoxGlowIOS: {},
+  searchIcon: {},
+  input: {},
 
   // recents (pill rows)
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionLabel: { fontSize: 16, fontWeight: '800', color: '#0F172A' },
+  sectionLabel: { fontSize: 16, fontWeight: '500', color: '#0F172A' },
   link: { fontWeight: '700', color: '#2563EB' },
   emptyText: { color: '#6B7280', fontSize: 14, paddingVertical: 8 },
 
@@ -469,7 +481,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
@@ -489,10 +501,14 @@ const styles = StyleSheet.create({
   footer: {
     position: 'absolute',
     left: 0, right: 0, bottom: 0,
-    paddingHorizontal: 16, paddingTop: 5, paddingBottom: 5,
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 6,
     backgroundColor: '#F4F5F7',
-    flexDirection: 'row', gap: 12,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#E5E7EB',
+    flexDirection: 'row',
+    gap: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#E5E7EB',
   },
   clearBtn: {
     flex: 1, height: 48, borderRadius: 12, borderWidth: 1, borderColor: '#3B82F6',
