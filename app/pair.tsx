@@ -245,21 +245,30 @@ export default function PairScreen() {
                     label="Recommended"
                     variant="benefit"
                     active={filter === 'benefit'}
-                    onPress={() => setFilter('benefit')}
+                    onPress={() => {
+                      setFilter('benefit');
+                      setInputOpen(true);
+                    }}
                   />
                   <FilterChip
                     emoji="⚠️"
                     label="Avoid"
                     variant="avoid"
                     active={filter === 'avoid'}
-                    onPress={() => setFilter('avoid')}
+                    onPress={() => {
+                      setFilter('avoid');
+                      setInputOpen(true);
+                    }}
                   />
                   <FilterChip
                     emoji="🗂️"
                     label="All"
                     variant="all"
                     active={filter === 'all'}
-                    onPress={() => setFilter('all')}
+                    onPress={() => {
+                      setFilter('all');
+                      setInputOpen(true);
+                    }}
                   />
                 </View>
 
