@@ -11,18 +11,39 @@ import {
   useWindowDimensions,
   KeyboardAvoidingView,
   InteractionManager,
+  Modal,
+  Image, 
+  ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const BASE_URL = 'https://stormhack-backend-production.up.railway.app'; // ← deployed API
 const STORAGE_KEY = 'eatwise:recent_pair_searches';
 const MAX_RECENTS = 8;
 
 export const options = { headerShown: false };
 
 type Filter = 'all' | 'avoid' | 'benefit';
+type ApiFilter = 'all' | 'avoid' | 'beneficial';
+
+type SourceRef = { label: string; url: string | null };
+type CompatibilityItem = {
+  food: string;
+  reason: string;
+  severity: number;
+  sources?: SourceRef[];
+};
+
+type CompatibilityResponse = {
+  ingredient: string;
+  category: string;
+  avoid?: CompatibilityItem[];
+  beneficial?: CompatibilityItem[];
+};
 
 // helper: apply styles only on web
 const webOnly = (s: any) => (Platform.OS === 'web' ? s : null);
@@ -34,19 +55,25 @@ export default function PairScreen() {
   const [recents, setRecents] = useState<string[]>([]);
   const [inputFocused, setInputFocused] = useState(false);
 
+  // API state
+  const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [result, setResult] = useState<CompatibilityResponse | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   // focus ref
   const inputRef = useRef<TextInput>(null);
 
   // layout helpers
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const FOOTER_H = 60; // real footer height
-  const TABS_H = 44;   // approx top tabs zone
+  const FOOTER_H = 60;
+  const TABS_H = 44;
 
-  // make the big white card fill the remaining viewport, but not force extra scroll
+  // keep white card height stable
   const cardMinHeight = Math.max(
     0,
-    height - insets.top - insets.bottom - FOOTER_H - TABS_H - 16 /*top margin*/
+    height - insets.top - insets.bottom - FOOTER_H - TABS_H - 16
   );
 
   useEffect(() => {
@@ -71,15 +98,46 @@ export default function PairScreen() {
 
   const clearRecents = async () => { await persistRecents([]); };
 
+  const apiFilter = (f: Filter | null): ApiFilter =>
+    f === 'benefit' ? 'beneficial' : (f ?? 'all');
+
   const onSearch = async () => {
     const q = query.trim();
     if (!q) return;
-    const effectiveFilter: Filter = filter ?? 'all';
+
     await addRecent(q);
-    console.log('Searching for', q, 'filter', effectiveFilter);
-    // TODO: hook backend
-    // const apiFilter = effectiveFilter === 'benefit' ? 'beneficial' : effectiveFilter;
-    // const data = await api.getIngredientCompatibility(q, apiFilter);
+
+    setLoading(true);
+    setErrorMsg(null);
+    setResult(null);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      const url = `${BASE_URL}/api/ingredients/${encodeURIComponent(q)}/compatibility?filter=${apiFilter(filter)}`;
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        let msg: string | undefined;
+        try { msg = (await res.json())?.message; } catch {}
+        throw new Error(msg || `Request failed (${res.status})`);
+      }
+
+      const data: CompatibilityResponse = await res.json();
+      setResult(data);
+      setModalVisible(true);
+    } catch (err: any) {
+      setErrorMsg(err?.name === 'AbortError' ? 'Request timed out' : (err?.message || 'Something went wrong'));
+      setModalVisible(true);
+    } finally {
+      clearTimeout(timeout);
+      setLoading(false);
+    }
   };
 
   const ClearAll = () => {
@@ -107,11 +165,27 @@ export default function PairScreen() {
   const kavBehavior =
     Platform.OS === 'ios' ? 'padding' :
     Platform.OS === 'android' ? 'height' :
-    undefined; // web/no-op
+    undefined;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top','left','right','bottom']}>
       <View style={styles.container}>
+
+    {/* Logo row */}
+<View style={styles.logoWrap}>
+  <Image
+    source={require('../assets/images/logo2.png')}
+    style={styles.logo}
+    resizeMode="contain"
+    accessible
+    accessibilityLabel="App logo"
+  />
+</View>
+
+
+
+
+
         {/* Tabs */}
         <View style={styles.topTabs}>
           <Pressable style={[styles.tabPill, styles.tabPillActive]} {...webOnly({ role: 'button' })}>
@@ -125,25 +199,18 @@ export default function PairScreen() {
         <KeyboardAvoidingView behavior={kavBehavior} style={{ flex: 1 }}>
           <ScrollView
             style={styles.scroll}
-            // just enough bottom padding for the footer + a little buffer
             contentContainerStyle={{ paddingBottom: FOOTER_H + insets.bottom + 12, flexGrow: 1 }}
             keyboardShouldPersistTaps="always"
           >
-            {/* ONE big white card fixed to screen height (no giant interior padding) */}
+            {/* ONE big white card fixed to screen height */}
             <View style={[styles.bigCard, { minHeight: cardMinHeight }]}>
               {/* Title */}
               <Text style={styles.headerTitle}>Help me find</Text>
-              <Text style={{ 
-  fontSize: 15, 
-  color: '#6B7280', 
-  marginTop: 6, 
-  fontFamily: 'PretendardJP-Light' 
-}}>
-  Select a filter to guide your search.
-</Text>
+              <Text style={{ fontSize: 15, color: '#6B7280', marginTop: 6, fontFamily: 'PretendardJP-Light' }}>
+                Select a filter to guide your search.
+              </Text>
 
-
-              {/* Filter chips (neutral → color when selected) */}
+              {/* Filter chips */}
               <View style={[styles.chipsRow, { marginTop: 10 }]}>
                 <FilterChip
                   emoji="🌱"
@@ -168,36 +235,24 @@ export default function PairScreen() {
                 />
               </View>
 
-              {/* Spacing */}
-              <View style={{ height: 10 }} />
-
               {/* Arrow row — opens input */}
               <Pressable
-                style={({ pressed }) => [
-                  styles.arrowRow,
-                  pressed && { opacity: 0.9 },
-                ]}
+                style={({ pressed }) => [styles.arrowRow, pressed && { opacity: 0.9 }]}
                 onPress={toggleInputOpen}
                 {...webOnly({ role: 'button' })}
               >
                 <Text style={styles.arrowTitle}>Choose an Ingredient</Text>
-                <Ionicons
-                  name="arrow-forward"
-                  size={22}
-                  color="#111827"
-                  style={webOnly({ userSelect: 'none', outlineStyle: 'none' })}
-                />
+                <Ionicons name="arrow-forward" size={22} color="#111827" />
               </Pressable>
 
-              {/* Collapsible input + recents */}
+              {/* Underline search field + recents */}
               {inputOpen && (
                 <View>
-                  {/* Underline style search field (like your screenshot) */}
                   <View style={[styles.searchUnderline, inputFocused && styles.searchUnderlineFocused]}>
                     <TextInput
                       ref={inputRef}
                       autoFocus
-                      placeholder="Try: Milk, Egg, etc."
+                      placeholder="Search: Eggs, Milk..."
                       placeholderTextColor="#9CA3AF"
                       value={query}
                       onChangeText={setQuery}
@@ -209,25 +264,19 @@ export default function PairScreen() {
                       inputMode={Platform.select({ web: 'text', default: undefined })}
                       enterKeyHint={Platform.select({ web: 'search', default: undefined })}
                     />
-                    <Ionicons
-                      name="search"
-                      size={22}
-                      color="#111827"
-                      style={styles.searchIconRight}
-                    />
+                    <Ionicons name="search" size={22} color="#111827" style={styles.searchIconRight} />
                   </View>
 
-                  {/* Recent Searches header */}
+                  {/* Recents */}
                   <View style={[styles.rowBetween, { marginTop: 30 }]}>
                     <Text style={styles.sectionLabel}>Recent Searches</Text>
                     {recents.length > 0 && (
                       <Pressable onPress={clearRecents} {...webOnly({ role: 'button' })}>
-                        <Text style={[styles.link, webOnly({ userSelect: 'none', outlineStyle: 'none', cursor: 'pointer' })]}>Clear</Text>
+                        <Text style={[styles.link, webOnly({ cursor: 'pointer' })]}>Clear</Text>
                       </Pressable>
                     )}
                   </View>
 
-                  {/* Recent list (pill rows, compact, matches new style better) */}
                   {recents.length === 0 ? (
                     <Text style={styles.emptyText}>No search history yet</Text>
                   ) : (
@@ -235,31 +284,15 @@ export default function PairScreen() {
                       {recents.map((item, i) => (
                         <Pressable
                           key={`${item}-${i}`}
-                          style={({ pressed }) => [
-                            styles.recentPillRow,
-                            pressed && { opacity: 0.95 },
-                          ]}
-                          onPress={() => {
-                            setQuery(item);
-                            onSearch();
-                          }}
+                          style={({ pressed }) => [styles.recentPillRow, pressed && { opacity: 0.95 }]}
+                          onPress={() => { setQuery(item); onSearch(); }}
                           {...webOnly({ role: 'button' })}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons
-                              name="time-outline"
-                              size={16}
-                              color="#6B7280"
-                              style={webOnly({ userSelect: 'none', outlineStyle: 'none', marginRight: 8 })}
-                            />
+                            <Ionicons name="time-outline" size={16} color="#6B7280" style={webOnly({ marginRight: 8 })} />
                             <Text style={styles.recentPillText}>{item}</Text>
                           </View>
-                          <Ionicons
-                            name="chevron-forward"
-                            size={18}
-                            color="#9CA3AF"
-                            style={webOnly({ userSelect: 'none', outlineStyle: 'none' })}
-                          />
+                          <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
                         </Pressable>
                       ))}
                     </View>
@@ -276,30 +309,93 @@ export default function PairScreen() {
             <Text style={styles.clearText}>Clear All</Text>
           </Pressable>
 
-          {/* Enabled/Disabled colors based on canSearch */}
           <Pressable
             style={[styles.searchBtn, canSearch ? styles.searchBtnOn : styles.searchBtnOff]}
             onPress={onSearch}
             disabled={!canSearch}
             {...webOnly({ role: 'button' })}
           >
-            <Ionicons
-              name="search"
-              size={18}
-              color={canSearch ? '#FFFFFF' : '#9CA3AF'}
-              style={webOnly({ userSelect: 'none', outlineStyle: 'none' })}
-            />
-            <Text
-              style={[
-                styles.searchText,
-                canSearch ? styles.searchTextOn : styles.searchTextOff,
-                webOnly({ userSelect: 'none', outlineStyle: 'none' }),
-              ]}
-            >
-              Search
+            {loading ? (
+              <ActivityIndicator size="small" color={canSearch ? '#FFFFFF' : '#9CA3AF'} />
+            ) : (
+              <Ionicons name="search" size={18} color={canSearch ? '#FFFFFF' : '#9CA3AF'} />
+            )}
+            <Text style={[styles.searchText, canSearch ? styles.searchTextOn : styles.searchTextOff]}>
+              {filter === 'avoid' ? 'Search Avoid' : filter === 'benefit' ? 'Search Recommended' : 'Search'}
             </Text>
           </Pressable>
         </View>
+
+        {/* Result/Error Modal — NOW SHOWS EVERYTHING */}
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalCard}>
+              {errorMsg ? (
+                <>
+                  <Text style={styles.modalTitle}>Hmm…</Text>
+                  <Text style={styles.modalText}>{errorMsg}</Text>
+                </>
+              ) : result ? (
+                <>
+                  <Text style={styles.modalTitle}>{result.ingredient || query}</Text>
+                  <Text style={styles.modalSub}>
+                    {result.category ? `Category: ${result.category}` : 'Category: —'}
+                  </Text>
+
+                  {/* Counts */}
+                  <View style={styles.modalRow}>
+                    <Badge color="#16A34A" bg="#ECFDF5" label={`Recommended: ${result.beneficial?.length ?? 0}`} />
+                    <Badge color="#DC2626" bg="#FEF2F2" label={`Avoid: ${result.avoid?.length ?? 0}`} />
+                  </View>
+
+                  {/* Scrollable detail list */}
+                  <View style={{ maxHeight: 380, marginTop: 12 }}>
+                    <ScrollView
+                      style={{ paddingRight: 2 }}
+                      contentContainerStyle={{ paddingBottom: 8 }}
+                      showsVerticalScrollIndicator
+                    >
+                      {/* Recommended section (if present) */}
+                      {Array.isArray(result.beneficial) && result.beneficial.length > 0 && (
+                        <Section title="Recommended">
+                          {result.beneficial.map((item, idx) => (
+                            <FoodRow key={`b-${idx}`} item={item} tone="good" />
+                          ))}
+                        </Section>
+                      )}
+
+                      {/* Avoid section (if present) */}
+                      {Array.isArray(result.avoid) && result.avoid.length > 0 && (
+                        <Section title="Avoid">
+                          {result.avoid.map((item, idx) => (
+                            <FoodRow key={`a-${idx}`} item={item} tone="bad" />
+                          ))}
+                        </Section>
+                      )}
+
+                      {/* No items fallback */}
+                      {!result.avoid?.length && !result.beneficial?.length && (
+                        <Text style={styles.modalText}>No detailed items returned.</Text>
+                      )}
+                    </ScrollView>
+                  </View>
+                </>
+              ) : (
+                <Text style={styles.modalText}>No data.</Text>
+              )}
+
+              <View style={{ height: 10 }} />
+              <Pressable style={styles.modalBtn} onPress={() => setModalVisible(false)}>
+                <Text style={styles.modalBtnText}>OK</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -336,6 +432,64 @@ function FilterChip({
   );
 }
 
+function Badge({ color, bg, label }: { color: string; bg: string; label: string }) {
+  return (
+    <View style={[styles.badge, { backgroundColor: bg, borderColor: color }]}>
+      <Text style={[styles.badgeText, { color }]}>{label}</Text>
+    </View>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={{ marginTop: 10 }}>
+      <Text style={styles.sectionHeading}>{title}</Text>
+      <View style={{ marginTop: 6 }}>{children}</View>
+    </View>
+  );
+}
+
+function FoodRow({ item, tone }: { item: CompatibilityItem; tone: 'good' | 'bad' }) {
+  const color = tone === 'good' ? '#16A34A' : '#DC2626';
+  const icon = tone === 'good' ? 'checkmark-circle' : 'close-circle';
+  const badgeBg = tone === 'good' ? '#ECFDF5' : '#FEF2F2';
+
+  return (
+    <View style={styles.foodRow}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Ionicons name={icon as any} size={18} color={color} />
+        <Text style={styles.foodName}>{item.food}</Text>
+      </View>
+
+      {/* Reason */}
+      <Text style={styles.foodReason}>{item.reason}</Text>
+
+      {/* Severity */}
+      <View style={[styles.badge, { backgroundColor: badgeBg, borderColor: color, alignSelf: 'flex-start', marginTop: 6 }]}>
+        <Text style={[styles.badgeText, { color }]}>{`Severity: ${item.severity}`}</Text>
+      </View>
+
+      {/* Sources */}
+      {Array.isArray(item.sources) && item.sources.length > 0 && (
+        <View style={{ marginTop: 6, gap: 4 }}>
+          {item.sources.map((s, i) => (
+            <Pressable
+              key={`${s.label}-${i}`}
+              onPress={() => s.url && Linking.openURL(s.url)}
+              disabled={!s.url}
+              style={({ pressed }) => pressed && s.url ? { opacity: 0.85 } : undefined}
+            >
+              <Text style={[styles.sourceLine, !s.url && { color: '#6B7280' }]}>
+                • {s.label}{s.url ? '  ↗' : ''}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 function getChipColors(variant: 'all' | 'avoid' | 'benefit', active: boolean) {
   // Neutral (inactive)
   const NEUTRAL = { bg: '#FFFFFF', border: '#E5E7EB', text: '#111827' };
@@ -343,7 +497,7 @@ function getChipColors(variant: 'all' | 'avoid' | 'benefit', active: boolean) {
 
   // Active colors
   switch (variant) {
-    case 'benefit': // Good → green
+    case 'benefit': // Recommended → green
       return { bg: '#F2FFF6', border: '#009632', text: '#009632' };
     case 'avoid':  // Avoid → orange/red
       return { bg: '#FFFAF7', border: '#F55A00', text: '#FF5E00' };
@@ -363,7 +517,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     paddingHorizontal: 16,
-    paddingTop: 6,
+    paddingTop:0,
     paddingBottom: 8,
     alignSelf: 'center',
     ...webOnly({ WebkitTapHighlightColor: 'transparent' }),
@@ -379,7 +533,7 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 16, fontWeight: '600', color: '#6B7280' },
   tabTextActive: { color: '#111827' },
 
-  // one big card (fills viewport but not overly padded)
+  // one big card
   bigCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -411,7 +565,17 @@ const styles = StyleSheet.create({
     }),
   },
   chipText: { fontSize: 14 },
-
+  logoWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 44,
+    paddingBottom: 20,
+  },
+  logo: {
+    width: 60,
+    height: 68,
+    alignSelf: 'center',
+  },
   // arrow row
   arrowRow: {
     marginTop: 8,
@@ -428,48 +592,32 @@ const styles = StyleSheet.create({
   },
   arrowTitle: { fontSize: 30, color: '#0F172A', fontFamily: 'PretendardJP-Light' },
 
-  /** Underline search field (like your mock) */
+  /** Underline search field */
   searchUnderline: {
     position: 'relative',
     paddingTop: 2,
     paddingBottom: 6,
     borderBottomWidth: 2,
-    borderBottomColor: '#9CA3AF', // base grey
+    borderBottomColor: '#9CA3AF',
     backgroundColor: 'transparent',
     marginTop: 8,
   },
-  searchUnderlineFocused: {
-    borderBottomColor: '#111827', // darker on focus
-  },
+  searchUnderlineFocused: { borderBottomColor: '#111827' },
   inputUnderline: {
-    fontSize: 28,
+    fontSize: 18,
     lineHeight: 34,
     color: '#111827',
     paddingRight: 36,
     paddingLeft: 0,
     paddingVertical: 0,
-    ...Platform.select({
-      web: {
-        outlineStyle: 'none',
-        caretColor: '#111827',
-      },
-    }),
+    ...Platform.select({ web: { outlineStyle: 'none', caretColor: '#111827' } }),
   },
   searchIconRight: {
     position: 'absolute',
     right: 0,
     top: 6,
-    ...Platform.select({
-      web: { userSelect: 'none', pointerEvents: 'none' },
-    }),
+    ...Platform.select({ web: { userSelect: 'none', pointerEvents: 'none' } }),
   },
-
-  // (legacy rounded box styles kept if you need elsewhere)
-  searchBox: { display: 'none' },
-  searchBoxFocused: {},
-  searchBoxGlowIOS: {},
-  searchIcon: {},
-  input: {},
 
   // recents (pill rows)
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -513,16 +661,11 @@ const styles = StyleSheet.create({
   clearBtn: {
     flex: 1, height: 48, borderRadius: 12, borderWidth: 1, borderColor: '#3B82F6',
     alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF',
-    ...webOnly({
-      outlineStyle: 'none',
-      WebkitTapHighlightColor: 'transparent',
-      userSelect: 'none',
-      cursor: 'pointer',
-    }),
+    ...webOnly({ outlineStyle: 'none', WebkitTapHighlightColor: 'transparent', userSelect: 'none', cursor: 'pointer' }),
   },
   clearText: { fontSize: 16, fontWeight: '700', color: '#2563EB' },
 
-  // conditional Search styles (enabled/disabled)
+  // conditional Search styles
   searchBtn: {
     flex: 1.2,
     height: 48,
@@ -531,22 +674,57 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    ...webOnly({
-      outlineStyle: 'none',
-      WebkitTapHighlightColor: 'transparent',
-      userSelect: 'none',
-      cursor: 'pointer',
-    }),
+    ...webOnly({ outlineStyle: 'none', WebkitTapHighlightColor: 'transparent', userSelect: 'none', cursor: 'pointer' }),
   },
-  searchBtnOn: {
-    backgroundColor: '#2563EB',
-  },
-  searchBtnOff: {
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
+  searchBtnOn: { backgroundColor: '#2563EB' },
+  searchBtnOff: { backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB' },
   searchText: { fontSize: 16, fontWeight: '700' },
   searchTextOn: { color: '#FFFFFF' },
   searchTextOff: { color: '#9CA3AF' },
+
+  // Modal
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(17, 24, 39, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 520,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 18,
+  },
+  modalTitle: { fontSize: 20, fontWeight: '800', color: '#0F172A' },
+  modalSub: { fontSize: 14, color: '#6B7280', marginTop: 4 },
+  modalText: { fontSize: 15, color: '#111827' },
+  modalRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
+
+  badge: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1 },
+  badgeText: { fontSize: 13, fontWeight: '700' },
+
+  sectionHeading: { fontSize: 16, fontWeight: '800', color: '#0F172A', marginTop: 6 },
+  foodRow: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 8,
+  },
+  foodName: { fontSize: 15, fontWeight: '800', color: '#0F172A' },
+  foodReason: { fontSize: 14, color: '#374151', marginTop: 6 },
+  sourceLine: { fontSize: 13, color: '#2563EB' },
+
+  modalBtn: {
+    marginTop: 14,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#111827',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15 },
 });
