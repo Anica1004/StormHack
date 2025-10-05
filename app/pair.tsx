@@ -747,8 +747,8 @@ const styles = StyleSheet.create({
   },
 
   // header
-  headerTitle: { fontSize: 30, paddingTop: 60, color: '#0F172A', fontFamily: 'PretendardJP-Light' },
-  title: { fontSize: 30, color: '#0F172A', fontFamily: 'PretendardJP-Light', marginBottom: 25 },
+  headerTitle: {  fontSize: 32, paddingTop: 60, color: '#0F172A', fontFamily: 'PretendardJP-Light' },
+  title: {  fontSize: 32, color: '#0F172A', fontFamily: 'PretendardJP-Light', marginBottom: 25 },
 
   // chips
   chipsRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
@@ -764,7 +764,7 @@ const styles = StyleSheet.create({
       cursor: 'pointer',
     }),
   },
-  chipText: { fontSize: 14 },
+  chipText: { fontSize: 16 },
   logoWrap: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -866,6 +866,7 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#E5E7EB',
   },
+  
   clearBtn: {
     flex: 1, height: 48, borderRadius: 12, borderWidth: 1, borderColor: '#3B82F6',
     alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF',
