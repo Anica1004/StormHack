@@ -410,7 +410,7 @@ function ResultView({
         <Ionicons name="chevron-back" size={20} color="#111827" />
       </Pressable>
 
-      {filter === 'all' ? (
+      {(filter === 'all' || filter == null) ? (
   <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
     {!!(result.beneficial?.length) && (
       <View style={{
@@ -448,6 +448,7 @@ function ResultView({
 )}
 
 
+
       
 
       {/* Title */}
@@ -463,7 +464,7 @@ function ResultView({
 }
 
 function ResultAccordion({ rows }: { rows: Row[] }) {
-  const [open, setOpen] = useState<number | null>(rows.length ? 0 : null);
+  const [open, setOpen] = useState<number | null>(null);
   return (
     <View style={{ marginTop: 16 }}>
       {rows.map((r, idx) => {
