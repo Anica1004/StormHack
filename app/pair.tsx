@@ -21,23 +21,31 @@ const MAX_RECENTS = 8;
 
 export const options = { headerShown: false };
 
+type Filter = 'all' | 'avoid' | 'benefit';
+
 export default function PairScreen() {
-  // sequential state
-  const [filter, setFilter] = useState<'all' | 'avoid' | 'benefit' | null>(null);
+  // steps: 1 Filter → 2 Ingredient → 3 Review
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+
+  const [filter, setFilter] = useState<Filter | null>(null);
   const [query, setQuery] = useState('');
   const [recents, setRecents] = useState<string[]>([]);
   const [inputFocused, setInputFocused] = useState(false);
 
-  const showInput = !!filter;
-  const showRecentsAndFooter = query.trim().length > 0;
-
-  // animations
-  const fadeInput = useRef(new Animated.Value(0)).current;
-  const slideInput = useRef(new Animated.Value(10)).current;
-  const fadeRecents = useRef(new Animated.Value(0)).current;
-  const slideRecents = useRef(new Animated.Value(10)).current;
+  // card animations
+  const fade2 = useRef(new Animated.Value(0)).current;
+  const slide2 = useRef(new Animated.Value(10)).current;
+  const fade3 = useRef(new Animated.Value(0)).current;
+  const slide3 = useRef(new Animated.Value(10)).current;
   const fadeFooter = useRef(new Animated.Value(0)).current;
   const slideFooter = useRef(new Animated.Value(10)).current;
+
+  // dot progress animation (scale per dot)
+  const dotScales = [
+    useRef(new Animated.Value(1)).current,
+    useRef(new Animated.Value(1)).current,
+    useRef(new Animated.Value(1)).current,
+  ];
 
   const animateIn = (fade: Animated.Value, slide: Animated.Value) => {
     fade.setValue(0);
@@ -48,6 +56,15 @@ export default function PairScreen() {
     ]).start();
   };
 
+  const pingDot = (index: number) => {
+    const v = dotScales[index];
+    Animated.sequence([
+      Animated.timing(v, { toValue: 1.15, duration: 140, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(v, { toValue: 1, duration: 140, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+    ]).start();
+  };
+
+  // load recents
   useEffect(() => {
     (async () => {
       try {
@@ -58,17 +75,6 @@ export default function PairScreen() {
       }
     })();
   }, []);
-
-  useEffect(() => {
-    if (showInput) animateIn(fadeInput, slideInput);
-  }, [showInput]);
-
-  useEffect(() => {
-    if (showRecentsAndFooter) {
-      animateIn(fadeRecents, slideRecents);
-      animateIn(fadeFooter, slideFooter);
-    }
-  }, [showRecentsAndFooter]);
 
   const persistRecents = async (next: string[]) => {
     setRecents(next);
@@ -90,12 +96,41 @@ export default function PairScreen() {
     await persistRecents([]);
   };
 
+  // step 1 → step 2 when choosing a filter
+  const chooseFilter = (f: Filter) => {
+    setFilter(f);
+    if (step !== 2 && step !== 3) {
+      setStep(2);
+      animateIn(fade2, slide2);
+      pingDot(1); // second dot
+    }
+  };
+
+  // pressing Enter goes to review (step 3)
+  const goToReview = async () => {
+    const q = query.trim();
+    if (!q || !filter) return;
+    await addRecent(q);
+    if (step !== 3) {
+      setStep(3);
+      animateIn(fade3, slide3);
+      animateIn(fadeFooter, slideFooter);
+      pingDot(2); // third dot
+    }
+  };
+
+  // if user clears input while on step 3, go back to step 2
+  useEffect(() => {
+    if (step === 3 && query.trim().length === 0) {
+      setStep(2);
+    }
+  }, [query, step]);
+
   const apiFilter = useMemo(() => (filter === 'benefit' ? 'beneficial' : filter || 'all'), [filter]);
 
   const onSearch = async () => {
     const q = query.trim();
-    if (!q) return;
-    await addRecent(q);
+    if (!q || !filter) return;
     // TODO: connect to backend
     // const data = await api.getIngredientCompatibility(q, apiFilter);
     console.log('Searching for', q, 'filter', apiFilter);
@@ -104,15 +139,20 @@ export default function PairScreen() {
   const ResetAll = () => {
     setQuery('');
     setFilter(null);
+    setStep(1);
     setInputFocused(false);
   };
 
-  const canSearch = showRecentsAndFooter;
+  const canSearch = step === 3 && query.trim().length > 0 && !!filter;
+
+  // dot ui helpers
+  const isDone = (i: number) => step > (i as 1 | 2 | 3);
+  const isActive = (i: number) => step === (i as 1 | 2 | 3);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView style={styles.safe} edges={['top','left','right','bottom']}>
       <View style={styles.container}>
-        {/* Top pills */}
+        {/* Top tabs */}
         <View style={styles.topTabs}>
           <Pressable style={[styles.tabPill, styles.tabPillActive]}>
             <Text style={[styles.tabText, styles.tabTextActive]}>Pairing</Text>
@@ -122,22 +162,52 @@ export default function PairScreen() {
           </Pressable>
         </View>
 
-        <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 168 }}>
-          {/* STEP 1: Filter */}
+        {/* DOT PROGRESS */}
+        <View style={styles.stepDotsWrap}>
+          <View style={styles.stepDotsRow}>
+            {[1, 2, 3].map((i, idx) => (
+              <Animated.View
+                key={i}
+                style={[
+                  styles.dotBase,
+                  isActive(i) && styles.dotActive,
+                  isDone(i) && styles.dotDone,
+                  { transform: [{ scale: dotScales[idx] }] },
+                ]}
+              />
+            ))}
+          </View>
+          <Text style={styles.stepCaption}>
+            {step === 1 ? 'Choose a filter'
+              : step === 2 ? 'Enter an ingredient (press Enter to continue)'
+              : 'Review your choices'}
+          </Text>
+        </View>
+
+        <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 184 }}>
+          {/* STEP 1: FILTER */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Help me find</Text>
             <Text style={styles.helperText}>Pick a filter to focus your results.</Text>
             <View style={[styles.chipsRow, { marginTop: 12 }]}>
-              <Chip label="All" active={filter === 'all'} onPress={() => setFilter('all')} />
-              <Chip label="⚠️ Avoid" active={filter === 'avoid'} onPress={() => setFilter('avoid')} />
-              <Chip label="🌿 Recommended" active={filter === 'benefit'} onPress={() => setFilter('benefit')} />
+              <Chip label="All" active={filter === 'all'} onPress={() => chooseFilter('all')} />
+              <Chip label="⚠️ Avoid" active={filter === 'avoid'} onPress={() => chooseFilter('avoid')} />
+              <Chip label="🌿 Recommended" active={filter === 'benefit'} onPress={() => chooseFilter('benefit')} />
             </View>
           </View>
 
-          {/* STEP 2: Ingredient input */}
-          {showInput && (
-            <Animated.View style={[styles.card, { opacity: fadeInput, transform: [{ translateY: slideInput }] }]}>
-              <Text style={styles.cardTitle}>Find what pairs with</Text>
+          {/* STEP 2: INGREDIENT (only shows after a filter is picked) */}
+          {step >= 2 && (
+            <Animated.View style={[styles.card, { opacity: fade2, transform: [{ translateY: slide2 }] }]}>
+              <View style={styles.rowBetween}>
+                <Text style={styles.cardTitle}>Find what pairs with</Text>
+                {step === 3 && (
+                  <Pressable onPress={() => setStep(2)} hitSlop={8}>
+                    <Text style={styles.link}>Edit</Text>
+                  </Pressable>
+                )}
+              </View>
+
               <View
                 style={[
                   styles.searchBox,
@@ -151,17 +221,18 @@ export default function PairScreen() {
                   value={query}
                   onChangeText={setQuery}
                   style={styles.input}
-                  returnKeyType="search"
-                  onSubmitEditing={onSearch}
+                  returnKeyType="done"
+                  onSubmitEditing={goToReview} // <-- ENTER to go to Step 3
                   onFocus={() => setInputFocused(true)}
                   onBlur={() => setInputFocused(false)}
-                  autoFocus
+                  autoFocus={step === 2}
                 />
                 <Pressable hitSlop={10}>
                   <Ionicons name="mic-outline" size={20} color="#6B7280" />
                 </Pressable>
               </View>
 
+              {/* Recents */}
               <View style={styles.rowBetween}>
                 <Text style={styles.sectionLabel}>Recent Searches</Text>
                 {recents.length > 0 && (
@@ -186,12 +257,34 @@ export default function PairScreen() {
                   </Pressable>
                 ))
               )}
+              {/* Helper */}
+              <Text style={styles.helperTextSmall}>Press Enter to continue to review.</Text>
+            </Animated.View>
+          )}
+
+          {/* STEP 3: REVIEW (only after Enter) */}
+          {step === 3 && (
+            <Animated.View style={[styles.card, { opacity: fade3, transform: [{ translateY: slide3 }] }]}>
+              <Text style={styles.cardTitle}>Review</Text>
+              <View style={styles.reviewRow}>
+                <ReviewItem
+                  label="Filter"
+                  value={filter === 'benefit' ? 'Recommended' : filter === 'avoid' ? 'Avoid' : 'All'}
+                  onEdit={() => setStep(1)}
+                />
+                <ReviewItem
+                  label="Ingredient"
+                  value={query}
+                  onEdit={() => setStep(2)}
+                />
+              </View>
+              <Text style={styles.helperTextSmall}>Everything look good? Tap Search below to fetch compatibility.</Text>
             </Animated.View>
           )}
         </ScrollView>
 
-        {/* Footer */}
-        {showRecentsAndFooter && (
+        {/* FOOTER: only on step 3 */}
+        {step === 3 && (
           <Animated.View style={[styles.footer, { opacity: fadeFooter, transform: [{ translateY: slideFooter }] }]}>
             <Pressable style={styles.clearBtn} onPress={ResetAll} hitSlop={8}>
               <Text style={styles.clearText}>Reset</Text>
@@ -212,7 +305,7 @@ export default function PairScreen() {
   );
 }
 
-/* Bits */
+/* Small bits */
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   return (
     <Pressable
@@ -230,11 +323,16 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
   );
 }
 
-function LabelPill({ label, value }: { label: string; value: string }) {
+function ReviewItem({ label, value, onEdit }: { label: string; value: string; onEdit: () => void }) {
   return (
-    <View style={styles.pill}>
-      <Text style={styles.pillLabel}>{label}</Text>
-      <Text style={styles.pillValue}>{value}</Text>
+    <View style={styles.reviewItem}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.reviewLabel}>{label}</Text>
+        <Text style={styles.reviewValue}>{value}</Text>
+      </View>
+      <Pressable onPress={onEdit} hitSlop={8}>
+        <Text style={styles.link}>Edit</Text>
+      </Pressable>
     </View>
   );
 }
@@ -254,12 +352,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     alignSelf: 'center',
   },
-  tabPill: {
-    backgroundColor: '#E9EBEF',
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 12,
-  },
+  tabPill: { backgroundColor: '#E9EBEF', paddingVertical: 10, paddingHorizontal: 18, borderRadius: 12 },
   tabPillActive: {
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
@@ -270,6 +363,14 @@ const styles = StyleSheet.create({
   },
   tabText: { fontSize: 15, fontWeight: '600', color: '#6B7280' },
   tabTextActive: { color: '#111827' },
+
+  /* dot progress */
+  stepDotsWrap: { paddingHorizontal: 16, marginTop: 6, marginBottom: 2, alignItems: 'center' },
+  stepDotsRow: { flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center' },
+  dotBase: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#E5E7EB' },
+  dotActive: { backgroundColor: '#2563EB' },
+  dotDone: { backgroundColor: '#93C5FD' },
+  stepCaption: { marginTop: 6, fontSize: 12.5, fontWeight: '700', color: '#4B5563', textAlign: 'center' },
 
   /* cards */
   card: {
@@ -285,6 +386,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: { fontSize: 19, fontWeight: '800', marginBottom: 6, color: '#0F172A' },
   helperText: { fontSize: 13.5, color: '#6B7280' },
+  helperTextSmall: { fontSize: 13, color: '#6B7280', marginTop: 10 },
 
   /* search */
   searchBox: {
@@ -322,10 +424,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
-  chipActive: {
-    backgroundColor: '#1D4ED8',
-    borderColor: '#1D4ED8',
-  },
+  chipActive: { backgroundColor: '#1D4ED8', borderColor: '#1D4ED8' },
   chipText: { fontSize: 14, fontWeight: '700', color: '#374151' },
   chipTextActive: { color: '#FFFFFF' },
 
@@ -345,52 +444,44 @@ const styles = StyleSheet.create({
   emptyText: { color: '#6B7280', fontSize: 14.5, paddingVertical: 10 },
   link: { fontWeight: '700', color: '#2563EB' },
 
-  /* inline pills (unused now but kept) */
-  pill: { backgroundColor: '#F3F4F6', borderRadius: 12, paddingVertical: 6, paddingHorizontal: 10, marginTop: 8 },
-  pillLabel: { fontSize: 11, color: '#6B7280' },
-  pillValue: { fontSize: 13, fontWeight: '800', color: '#111827' },
+  /* review */
+  reviewRow: { marginTop: 8, gap: 10 },
+  reviewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E5E7EB',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginTop: 8,
+  },
+  reviewLabel: { fontSize: 12, color: '#6B7280', fontWeight: '700' },
+  reviewValue: { fontSize: 15, color: '#0F172A', fontWeight: '800', marginTop: 2 },
 
   /* footer */
   footer: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 14,
+    left: 0, right: 0, bottom: 0,
+    paddingHorizontal: 16, paddingTop: 10, paddingBottom: 14,
     backgroundColor: '#F6F7F9',
-    flexDirection: 'row',
-    gap: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: -4 },
+    flexDirection: 'row', gap: 12,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#E5E7EB',
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: -4 },
     ...Platform.select({ android: { elevation: 12 } }),
   },
   clearBtn: {
-    flex: 1,
-    height: 50,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    flex: 1, height: 50, borderRadius: 12, borderWidth: 1, borderColor: '#D1D5DB',
+    alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF',
   },
   clearText: { fontSize: 16, fontWeight: '800', color: '#374151' },
   searchBtn: {
-    flex: 1.2,
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: '#2563EB',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    ...Platform.select({ ios: { shadowColor: '#2563EB', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } } }),
+    flex: 1.2, height: 50, borderRadius: 12, backgroundColor: '#2563EB',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    ...Platform.select({
+      ios: { shadowColor: '#2563EB', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
+    }),
   },
   searchText: { fontSize: 16, fontWeight: '800', color: '#FFFFFF' },
 });
