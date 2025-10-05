@@ -145,10 +145,6 @@ export default function PairScreen() {
 
   const canSearch = step === 3 && query.trim().length > 0 && !!filter;
 
-  // dot ui helpers
-  const isDone = (i: number) => step > (i as 1 | 2 | 3);
-  const isActive = (i: number) => step === (i as 1 | 2 | 3);
-
   return (
     <SafeAreaView style={styles.safe} edges={['top','left','right','bottom']}>
       <View style={styles.container}>
@@ -171,7 +167,7 @@ export default function PairScreen() {
           <Dot active={step >= 3} label="Review" />
         </View>
 
-        <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 184 }}>
+        <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 184 }} keyboardShouldPersistTaps="handled"   >
           {/* STEP 1: FILTER */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Help me find</Text>
@@ -209,14 +205,11 @@ export default function PairScreen() {
                   onChangeText={setQuery}
                   style={styles.input}
                   returnKeyType="done"
-                  onSubmitEditing={goToReview} // <-- ENTER to go to Step 3
+                  onSubmitEditing={goToReview} 
                   onFocus={() => setInputFocused(true)}
                   onBlur={() => setInputFocused(false)}
                   autoFocus={step === 2}
                 />
-                <Pressable hitSlop={10}>
-                  <Ionicons name="mic-outline" size={20} color="#6B7280" />
-                </Pressable>
               </View>
 
               {/* Recents */}
