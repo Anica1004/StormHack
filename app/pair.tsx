@@ -413,39 +413,80 @@ function ResultView({
       {(filter === 'all' || filter == null) ? (
   <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
     {!!(result.beneficial?.length) && (
-      <View style={{
-        alignSelf: 'flex-start',
-        paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1,
-        backgroundColor: '#ECFDF5', borderColor: '#16A34A',
-      }}>
-        <Text style={{ color: '#16A34A', fontWeight: '600' }}>Good</Text>
+      <View
+        style={{
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          paddingVertical: 6,
+          paddingHorizontal: 12,
+          borderRadius: 12,
+          borderWidth: 1,
+          backgroundColor: '#ECFDF5',
+          borderColor: '#16A34A',
+        }}
+      >
+        <Ionicons name="checkmark-circle" size={16} color="#16A34A" />
+        <Text style={{ color: '#16A34A', textAlign: 'center' }}>
+          Recommended
+        </Text>
       </View>
     )}
     {!!(result.avoid?.length) && (
-      <View style={{
-        alignSelf: 'flex-start',
-        paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1,
-        backgroundColor: '#FEF2F2', borderColor: '#DC2626',
-      }}>
-        <Text style={{ color: '#DC2626', fontWeight: '600' }}>Avoid</Text>
+      <View
+        style={{
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          paddingVertical: 6,
+          paddingHorizontal: 12,
+          borderRadius: 12,
+          borderWidth: 1,
+          backgroundColor: '#FEF2F2',
+          borderColor: '#DC2626',
+        }}
+      >
+        <Ionicons name="close-circle" size={16} color="#DC2626" />
+        <Text style={{ color: '#DC2626',  textAlign: 'center' }}>
+          Avoid
+        </Text>
       </View>
     )}
   </View>
 ) : (
   showBadge && (
-    <View style={{
-      alignSelf: 'flex-start',
-      paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1,
-      backgroundColor: isGood ? '#ECFDF5' : '#FEF2F2',
-      borderColor: isGood ? '#16A34A' : '#DC2626',
-      marginBottom: 10,
-    }}>
-      <Text style={{ color: isGood ? '#16A34A' : '#DC2626', fontWeight: '600' }}>
-        {isGood ? '🌱 Good' : '⚠ Avoid'}
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        backgroundColor: isGood ? '#ECFDF5' : '#FEF2F2',
+        borderColor: isGood ? '#16A34A' : '#DC2626',
+        marginBottom: 10,
+      }}
+    >
+      <Ionicons
+        name={isGood ? 'checkmark-circle' : 'close-circle'}
+        size={16}
+        color={isGood ? '#16A34A' : '#DC2626'}
+      />
+      <Text style={{ color: isGood ? '#16A34A' : '#DC2626', textAlign: 'center' }}>
+        {isGood ? 'Recommended' : 'Avoid'}
       </Text>
     </View>
   )
 )}
+
 
 
 
