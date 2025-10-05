@@ -13,6 +13,7 @@ import {
   Image,
   ActivityIndicator,
   Linking,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,8 +33,8 @@ type Mode = 'daily' | 'chronic';
 type SourceRef = { label: string; url: string | null };
 
 type DiseaseItem = {
-  food?: string;              // API uses "food"
-  ingredient?: string;        // just in case
+  food?: string;
+  ingredient?: string;
   reason: string;
   severity: number;
   affectedDiseases?: string[];
@@ -52,11 +53,11 @@ export default function WellnessScreen() {
   // segmented tabs
   const [activeSeg, setActiveSeg] = useState<'pairing' | 'wellness'>('wellness');
 
-  // demo mode (doesn't affect API, only placeholder/prompt)
+  // demo-only mode (placeholder/prompt copy)
   const [mode, setMode] = useState<Mode>();
 
   // filter & search
-  const [filter, setFilter] = useState<Filter | null>();
+  const [filter, setFilter] = useState<Filter | null>('all');
   const [inputOpen, setInputOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [recents, setRecents] = useState<string[]>([]);
@@ -67,9 +68,15 @@ export default function WellnessScreen() {
   const [result, setResult] = useState<DiseaseGuide | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // layout
+  // layout to make the white card fill the screen (like Pair)
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
   const FOOTER_H = 60;
+  const [headerH, setHeaderH] = useState(0);
+  const cardMinHeight = Math.max(
+    0,
+    height - insets.top - insets.bottom - FOOTER_H - headerH - 30
+  );
 
   // focus ref
   const inputRef = useRef<TextInput>(null);
@@ -144,7 +151,7 @@ export default function WellnessScreen() {
 
       const data: DiseaseGuide = await res.json();
       setResult(data);
-      setActiveSeg('wellness'); // keep this tab active
+      setActiveSeg('wellness');
     } catch (err: any) {
       setErrorMsg(err?.name === 'AbortError' ? 'Request timed out' : (err?.message || 'Something went wrong'));
       setResult(null);
@@ -165,7 +172,7 @@ export default function WellnessScreen() {
 
   const canSearch = query.trim().length > 0;
 
-  // open input + focus reliably (match Pairing behavior)
+  // open input + focus, like Pair
   const toggleInputOpen = () => {
     setInputOpen(prev => {
       const next = !prev;
@@ -189,20 +196,18 @@ export default function WellnessScreen() {
       ? 'Search: period, fatigue, digestion…'
       : 'Search: diabetes, hypertension…';
 
-      const promptCopy =
-      mode === 'daily'
-        ? 'find ingredients for daily wellness'
-        : mode === 'chronic'
-          ? 'find ingredients for chronic care'
-          : 'find ingredients for...';
-    
-
+  const promptCopy =
+    mode === 'daily'
+      ? 'find ingredients for daily wellness'
+      : mode === 'chronic'
+        ? 'find ingredients for chronic care'
+        : 'find ingredients for...';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top','left','right','bottom']}>
       <View style={{ flex: 1 }}>
-        {/* Header (logo + segmented tabs) */}
-        <View>
+        {/* Header (logo + segmented tabs). We measure its height to compute cardMinHeight */}
+        <View onLayout={e => setHeaderH(e.nativeEvent.layout.height)}>
           <View style={styles.logoWrap}>
             <Image
               source={require('../assets/images/logo2.png')}
@@ -213,7 +218,7 @@ export default function WellnessScreen() {
             />
           </View>
 
-          <View style={styles.segmented}>
+          <View className="segmented" style={styles.segmented}>
             <Pressable
               style={[styles.segment, activeSeg === 'pairing' && styles.segmentActive]}
               onPress={() => {
@@ -251,22 +256,24 @@ export default function WellnessScreen() {
         <KeyboardAvoidingView behavior={kavBehavior} style={{ flex: 1 }}>
           <ScrollView
             style={styles.scroll}
-            contentContainerStyle={{ paddingBottom: FOOTER_H + insets.bottom + 16, paddingTop: 8 }}
+            // flexGrow:1 is IMPORTANT so the white card can stretch to minHeight when content is short
+            contentContainerStyle={{ paddingBottom: FOOTER_H + insets.bottom + 16, paddingTop: 8, flexGrow: 1 }}
             keyboardShouldPersistTaps="always"
           >
-            {/* If we have results, render like Pairing; else show search card */}
+            {/* Results fill the same minHeight as the search card */}
             {result ? (
               <ResultView
                 result={result}
                 filter={filter}
                 query={query}
+                cardMinHeight={cardMinHeight}
                 onBack={() => { setResult(null); ClearAll(); }}
               />
             ) : (
-              <View style={styles.card}>
+              <View style={[styles.card, { minHeight: cardMinHeight }]}>
                 <Text style={styles.kicker}>For my</Text>
 
-                {/* Demo-only mode row (doesn't affect API; controls placeholder/prompt) */}
+                {/* Demo-only mode (placeholder/prompt copy only) */}
                 <View style={[styles.modeRow, { marginBottom: 0 }]}>
                   <ModeChip
                     emoji="️️🌤️"
@@ -316,7 +323,6 @@ export default function WellnessScreen() {
                 >
                   <Text style={styles.bigPromptText}>{promptCopy}</Text>
                   <Ionicons name="arrow-forward" size={22} color="#111827" />
-            
                 </Pressable>
 
                 {/* Rounded search input */}
@@ -340,41 +346,40 @@ export default function WellnessScreen() {
                   </View>
                 )}
 
-               {/* Recents — only show when input is open */}
-{inputOpen && (
-  <>
-    <View style={[styles.rowBetween, { marginTop: 26 }]}>
-      <Text style={styles.sectionLabel}>Recent Searches</Text>
-      {recents.length > 0 && (
-        <Pressable onPress={clearRecents} {...webOnly({ role: 'button' })}>
-          <Text style={[styles.link, webOnly({ cursor: 'pointer' })]}>Clear</Text>
-        </Pressable>
-      )}
-    </View>
+                {/* Recents — only show when input is open */}
+                {inputOpen && (
+                  <>
+                    <View style={[styles.rowBetween, { marginTop: 26 }]}>
+                      <Text style={styles.sectionLabel}>Recent Searches</Text>
+                      {recents.length > 0 && (
+                        <Pressable onPress={clearRecents} {...webOnly({ role: 'button' })}>
+                          <Text style={[styles.link, webOnly({ cursor: 'pointer' })]}>Clear</Text>
+                        </Pressable>
+                      )}
+                    </View>
 
-    {recents.length === 0 ? (
-      <Text style={styles.emptyText}>No search history yet</Text>
-    ) : (
-      <View style={{ marginTop: 6 }}>
-        {recents.map((item, i) => (
-          <Pressable
-            key={`${item}-${i}`}
-            style={({ pressed }) => [styles.recentPillRow, pressed && { opacity: 0.95 }]}
-            onPress={() => { setQuery(item); onSearch(); }}
-            {...webOnly({ role: 'button' })}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="time-outline" size={16} color="#6B7280" style={webOnly({ marginRight: 8 })} />
-              <Text style={styles.recentPillText}>{item}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-          </Pressable>
-        ))}
-      </View>
-    )}
-  </>
-)}
-
+                    {recents.length === 0 ? (
+                      <Text style={styles.emptyText}>No search history yet</Text>
+                    ) : (
+                      <View style={{ marginTop: 6 }}>
+                        {recents.map((item, i) => (
+                          <Pressable
+                            key={`${item}-${i}`}
+                            style={({ pressed }) => [styles.recentPillRow, pressed && { opacity: 0.95 }]}
+                            onPress={() => { setQuery(item); onSearch(); }}
+                            {...webOnly({ role: 'button' })}
+                          >
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                              <Ionicons name="time-outline" size={16} color="#6B7280" style={webOnly({ marginRight: 8 })} />
+                              <Text style={styles.recentPillText}>{item}</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+                  </>
+                )}
 
                 {!!errorMsg && <Text style={{ color: '#DC2626', marginTop: 10 }}>{errorMsg}</Text>}
               </View>
@@ -409,7 +414,7 @@ export default function WellnessScreen() {
   );
 }
 
-/** ===== Helpers for results rendering (inline), mirroring Pairing ===== */
+/** ===== Helpers (results), mirrored from Pair and now honoring minHeight ===== */
 
 type Row = DiseaseItem & { _kind: 'good' | 'bad', _name: string };
 
@@ -440,11 +445,13 @@ function ResultView({
   result,
   filter,
   query,
+  cardMinHeight,
   onBack,
 }: {
   result: DiseaseGuide;
   filter: Filter | null;
   query: string;
+  cardMinHeight: number;
   onBack: () => void;
 }) {
   const rows = rowsFromResult(result, filter);
@@ -453,7 +460,7 @@ function ResultView({
   const isGood = tone === 'good';
 
   return (
-    <View style={[styles.card, { paddingTop: 60, paddingBottom: 16 }]}>
+    <View style={[styles.card, { paddingTop: 60, paddingBottom: 16, minHeight: cardMinHeight }]}>
       {/* Back chip */}
       <Pressable
         onPress={onBack}
@@ -557,7 +564,6 @@ function ResultAccordion({ rows }: { rows: Row[] }) {
               <View style={{ paddingHorizontal: 12, paddingBottom: 14 }}>
                 <Text style={{ fontSize: 14, color: '#374151' }}>{r.reason}</Text>
 
-                {/* Affected diseases */}
                 {!!(r.affectedDiseases?.length) && (
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
                     {r.affectedDiseases!.map((d, i) => (
@@ -574,12 +580,10 @@ function ResultAccordion({ rows }: { rows: Row[] }) {
                   </View>
                 )}
 
-                {/* Severity */}
                 <View style={[styles.badge, { backgroundColor: r._kind === 'good' ? '#ECFDF5' : '#FEF2F2', borderColor: color, alignSelf: 'flex-start', marginTop: 8 }]}>
                   <Text style={[styles.badgeText, { color }]}>{`Severity: ${r.severity}`}</Text>
                 </View>
 
-                {/* Sources */}
                 {Array.isArray(r.sources) && r.sources.length > 0 && (
                   <View style={{ marginTop: 8, gap: 4 }}>
                     {r.sources.map((s, i) => (
@@ -607,49 +611,49 @@ function ResultAccordion({ rows }: { rows: Row[] }) {
 
 /** ===== Small UI atoms ===== */
 function ModeChip({
-    emoji,
-    label,
-    active,
-    onPress,
-  }: {
-    emoji: string;
-    label: string;
-    active: boolean;
-    onPress: () => void;
-  }) {
-    const isDaily = label.toLowerCase().includes('daily');
-    const bgColor = active
-      ? isDaily
-        ? '#FFF4E5' 
-        : '#E5E7EB' 
-      : '#FFFFFF';
-    const borderColor = active
-      ? isDaily
-        ? '#F97316'
-        : '#9CA3AF'
-      : '#E5E7EB';
-    const textColor = active
-      ? isDaily
-        ? '#C2410C' 
-        : '#374151' 
-      : '#6B7280'; 
-  
-    return (
-      <Pressable
-        onPress={onPress}
-        style={[
-          styles.modeChip,
-          { backgroundColor: bgColor, borderColor: borderColor },
-        ]}
-        android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
-        {...webOnly({ role: 'button' })}
-      >
-        <Text style={[styles.modeChipText, { color: textColor }]}>
-          {emoji} {label}
-        </Text>
-      </Pressable>
-    );
-  }
+  emoji,
+  label,
+  active,
+  onPress,
+}: {
+  emoji: string;
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  const isDaily = label.toLowerCase().includes('daily');
+  const bgColor = active
+    ? isDaily
+      ? '#FFF4E5'
+      : '#E5E7EB'
+    : '#FFFFFF';
+  const borderColor = active
+    ? isDaily
+      ? '#F97316'
+      : '#9CA3AF'
+    : '#E5E7EB';
+  const textColor = active
+    ? isDaily
+      ? '#C2410C'
+      : '#374151'
+    : '#6B7280';
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.modeChip,
+        { backgroundColor: bgColor, borderColor: borderColor },
+      ]}
+      android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
+      {...webOnly({ role: 'button' })}
+    >
+      <Text style={[styles.modeChipText, { color: textColor }]}>
+        {emoji} {label}
+      </Text>
+    </Pressable>
+  );
+}
 
 function FilterChip({
   emoji,
@@ -691,7 +695,7 @@ function getChipColors(variant: 'all' | 'avoid' | 'benefit', active: boolean) {
   }
 }
 
-/** ===== Styles (borrowed from Pairing + small additions) ===== */
+/** ===== Styles ===== */
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F5F7' },
   scroll: { flex: 1, paddingHorizontal: 20 },
@@ -722,7 +726,7 @@ const styles = StyleSheet.create({
   segmentText: { fontSize: 16, fontWeight: '600', color: '#6B7280' },
   segmentTextActive: { color: '#111827' },
 
-  // card container (same vibe as Pairing big card)
+  // card container (white panel that now fills the screen like Pair)
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
@@ -755,11 +759,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  modeChipOn: { backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' },
-  modeChipOff: { backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' },
   modeChipText: { fontSize: 15 },
-  modeChipTextOn: { color: '#0F172A' },
-  modeChipTextOff: { color: '#6B7280' },
 
   // filter chips
   chip: {
@@ -813,7 +813,7 @@ const styles = StyleSheet.create({
     }),
   },
 
-  // recents
+  // recents (same “pill rows” as Pair)
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionLabel: { fontSize: 16, fontWeight: '500', color: '#0F172A' },
   link: { fontWeight: '700', color: '#2563EB' },
