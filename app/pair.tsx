@@ -163,25 +163,12 @@ export default function PairScreen() {
         </View>
 
         {/* DOT PROGRESS */}
-        <View style={styles.stepDotsWrap}>
-          <View style={styles.stepDotsRow}>
-            {[1, 2, 3].map((i, idx) => (
-              <Animated.View
-                key={i}
-                style={[
-                  styles.dotBase,
-                  isActive(i) && styles.dotActive,
-                  isDone(i) && styles.dotDone,
-                  { transform: [{ scale: dotScales[idx] }] },
-                ]}
-              />
-            ))}
-          </View>
-          <Text style={styles.stepCaption}>
-            {step === 1 ? 'Choose a filter'
-              : step === 2 ? 'Enter an ingredient (press Enter to continue)'
-              : 'Review your choices'}
-          </Text>
+        <View style={styles.progressRow}>
+          <Dot active={step >= 1} label="Filter" />
+          <Separator />
+          <Dot active={step >= 2} label="Ingredient" />
+          <Separator />
+          <Dot active={step >= 3} label="Review" />
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 184 }}>
@@ -337,12 +324,24 @@ function ReviewItem({ label, value, onEdit }: { label: string; value: string; on
   );
 }
 
+function Dot({ active, label }: { active: boolean; label: string }) {
+  return (
+    <View style={{ alignItems: 'center' }}>
+      <View style={[styles.dot, active && styles.dotActive]} />
+      <Text style={styles.dotLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function Separator() {
+  return <View style={styles.sep} />;
+}
 /* Styles */
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F6F7F9' },
   container: { flex: 1 },
   scroll: { flex: 1, paddingHorizontal: 16 },
-
+ sep: { width: 40, height: 2, backgroundColor: '#E5E7EB', marginHorizontal: 6, borderRadius: 2 },
   /* top tabs */
   topTabs: {
     flexDirection: 'row',
@@ -387,6 +386,11 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 19, fontWeight: '800', marginBottom: 6, color: '#0F172A' },
   helperText: { fontSize: 13.5, color: '#6B7280' },
   helperTextSmall: { fontSize: 13, color: '#6B7280', marginTop: 10 },
+
+  dot: { width: 10, height: 10, borderRadius: 6, backgroundColor: '#D1D5DB' },
+  dotLabel: { marginTop: 6, fontSize: 12, color: '#6B7280' },
+
+  progressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 16, paddingTop: 6, paddingBottom: 2 },
 
   /* search */
   searchBox: {
