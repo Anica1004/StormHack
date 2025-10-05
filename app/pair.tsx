@@ -11,8 +11,7 @@ import {
   useWindowDimensions,
   KeyboardAvoidingView,
   InteractionManager,
-  Modal,
-  Image, 
+  Image,
   ActivityIndicator,
   Linking,
 } from 'react-native';
@@ -57,9 +56,11 @@ export default function PairScreen() {
 
   // API state
   const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
   const [result, setResult] = useState<CompatibilityResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // NEW: segmented active state (pairing or wellness)
+  const [activeSeg, setActiveSeg] = useState<'pairing' | 'wellness'>('pairing');
 
   // focus ref
   const inputRef = useRef<TextInput>(null);
@@ -68,13 +69,12 @@ export default function PairScreen() {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const FOOTER_H = 60;
-  const TABS_H = 44;
   const [headerH, setHeaderH] = useState(0);
 
-  // keep white card height stable
+  // keep white card height stable (search state)
   const cardMinHeight = Math.max(
     0,
-    height - insets.top - insets.bottom - FOOTER_H - headerH - 30 
+    height - insets.top - insets.bottom - FOOTER_H - headerH - 30
   );
 
   useEffect(() => {
@@ -130,11 +130,12 @@ export default function PairScreen() {
       }
 
       const data: CompatibilityResponse = await res.json();
-      setResult(data);
-      setModalVisible(true);
+      setResult(data); // show inline (no modal)
+      setActiveSeg('pairing'); // keep "Pairing" selected like your screenshot
     } catch (err: any) {
       setErrorMsg(err?.name === 'AbortError' ? 'Request timed out' : (err?.message || 'Something went wrong'));
-      setModalVisible(true);
+      // show the error inline too
+      setResult(null);
     } finally {
       clearTimeout(timeout);
       setLoading(false);
@@ -146,6 +147,7 @@ export default function PairScreen() {
     setInputOpen(false);
     setQuery('');
     setInputFocused(false);
+    setErrorMsg(null);
   };
 
   const canSearch = query.trim().length > 0;
@@ -172,148 +174,155 @@ export default function PairScreen() {
     <SafeAreaView style={styles.safe} edges={['top','left','right','bottom']}>
       <View style={styles.container}>
 
+        <View onLayout={e => setHeaderH(e.nativeEvent.layout.height)}>
+          {/* Logo row */}
+          <View style={styles.logoWrap}>
+            <Image
+              source={require('../assets/images/logo2.png')}
+              style={styles.logo}
+              resizeMode="contain"
+              accessible
+              accessibilityLabel="App logo"
+            />
+          </View>
 
-<View  onLayout={e => setHeaderH(e.nativeEvent.layout.height)}>
-    {/* Logo row */}
-<View style={styles.logoWrap}>
-  <Image
-    source={require('../assets/images/logo2.png')}
-    style={styles.logo}
-    resizeMode="contain"
-    accessible
-    accessibilityLabel="App logo"
-  />
-</View>
+          {/* Segmented toggle: Pairing / Wellness */}
+          <View style={styles.segmented}>
+            <Pressable
+              style={[styles.segment, activeSeg === 'pairing' && styles.segmentActive]}
+              disabled={activeSeg === 'pairing'}
+            >
+              <Text style={[styles.segmentText, activeSeg === 'pairing' && styles.segmentTextActive]}>Pairing</Text>
+            </Pressable>
 
-
-
-
-
-        {/* Tabs */}
-        {/* Segmented toggle: Pairing / Wellness */}
-<View style={styles.segmented}>
-  <Pressable
-    style={[styles.segment, styles.segmentActive]}
-    // you're already on this screen
-    disabled
-  >
-    <Text style={[styles.segmentText, styles.segmentTextActive]}>Pairing</Text>
-  </Pressable>
-
-  <Pressable
-    style={styles.segment}
-    onPress={() => router.push('/wellness')}
-  >
-    <Text style={styles.segmentText}>Wellness</Text>
-  </Pressable>
-</View>
-</View>
-
+            <Pressable
+              style={[styles.segment, activeSeg === 'wellness' && styles.segmentActive]}
+              onPress={() => {
+                if (activeSeg !== 'wellness') {
+                  setActiveSeg('wellness');
+                  router.push('/wellness');
+                }
+              }}
+            >
+              <Text style={[styles.segmentText, activeSeg === 'wellness' && styles.segmentTextActive]}>Wellness</Text>
+            </Pressable>
+          </View>
+        </View>
 
         <KeyboardAvoidingView behavior={kavBehavior} style={{ flex: 1 }}>
           <ScrollView
             style={styles.scroll}
-            contentContainerStyle={{ paddingBottom: insets.bottom + 8 }} 
+            contentContainerStyle={{ paddingBottom: FOOTER_H + insets.bottom + 16, flexGrow: 1 }}
             keyboardShouldPersistTaps="always"
           >
-            {/* ONE big white card fixed to screen height */}
-            <View style={[styles.bigCard, { minHeight: cardMinHeight}]}>
-              {/* Title */}
-              <Text style={styles.headerTitle}>Help me find</Text>
-              <Text style={{ fontSize: 15, color: '#6B7280', marginTop: 6, fontFamily: 'PretendardJP-Light' }}>
-                Select a filter to guide your search.
-              </Text>
+            {/* If we have results, render them inline; otherwise show the search card */}
+            {result ? (
+              <ResultView
+                result={result}
+                filter={filter}
+                query={query}
+                onBack={() => { setResult(null); ClearAll(); }}
+              />
+            ) : (
+              <View style={[styles.bigCard, { minHeight: cardMinHeight }]}>
+                {/* Title */}
+                <Text style={styles.headerTitle}>Help me find</Text>
+                <Text style={{ fontSize: 15, color: '#6B7280', marginTop: 6, fontFamily: 'PretendardJP-Light' }}>
+                  Select a filter to guide your search.
+                </Text>
 
-              {/* Filter chips */}
-              <View style={[styles.chipsRow, { marginTop: 10 }]}>
-                <FilterChip
-                  emoji="🌱"
-                  label="Recommended"
-                  variant="benefit"
-                  active={filter === 'benefit'}
-                  onPress={() => setFilter('benefit')}
-                />
-                <FilterChip
-                  emoji="⚠️"
-                  label="Avoid"
-                  variant="avoid"
-                  active={filter === 'avoid'}
-                  onPress={() => setFilter('avoid')}
-                />
-                <FilterChip
-                  emoji="🗂️"
-                  label="All"
-                  variant="all"
-                  active={filter === 'all'}
-                  onPress={() => setFilter('all')}
-                />
-              </View>
+                {/* Filter chips */}
+                <View style={[styles.chipsRow, { marginTop: 10 }]}>
+                  <FilterChip
+                    emoji="🌱"
+                    label="Recommended"
+                    variant="benefit"
+                    active={filter === 'benefit'}
+                    onPress={() => setFilter('benefit')}
+                  />
+                  <FilterChip
+                    emoji="⚠️"
+                    label="Avoid"
+                    variant="avoid"
+                    active={filter === 'avoid'}
+                    onPress={() => setFilter('avoid')}
+                  />
+                  <FilterChip
+                    emoji="🗂️"
+                    label="All"
+                    variant="all"
+                    active={filter === 'all'}
+                    onPress={() => setFilter('all')}
+                  />
+                </View>
 
-              {/* Arrow row — opens input */}
-              <Pressable
-                style={({ pressed }) => [styles.arrowRow, { marginTop: 20 }, pressed && { opacity: 0.9 }]}
-                onPress={toggleInputOpen}
-                {...webOnly({ role: 'button' })}
-              >
-                <Text style={styles.arrowTitle}>Choose an Ingredient</Text>
-                <Ionicons name="arrow-forward" size={22} color="#111827" />
-              </Pressable>
+                {/* Arrow row — opens input */}
+                <Pressable
+                  style={({ pressed }) => [styles.arrowRow, { marginTop: 20 }, pressed && { opacity: 0.9 }]}
+                  onPress={toggleInputOpen}
+                  {...webOnly({ role: 'button' })}
+                >
+                  <Text style={styles.arrowTitle}>Choose an Ingredient</Text>
+                  <Ionicons name="arrow-forward" size={22} color="#111827" />
+                </Pressable>
 
-              {/* Underline search field + recents */}
-              {inputOpen && (
-                <View>
-                  <View style={[styles.searchUnderline, inputFocused && styles.searchUnderlineFocused]}>
-                    <TextInput
-                      ref={inputRef}
-                      autoFocus
-                      placeholder="Search: Eggs, Milk..."
-                      placeholderTextColor="#9CA3AF"
-                      value={query}
-                      onChangeText={setQuery}
-                      style={styles.inputUnderline}
-                      returnKeyType="search"
-                      onSubmitEditing={onSearch}
-                      onFocus={() => setInputFocused(true)}
-                      onBlur={() => setInputFocused(false)}
-                      inputMode={Platform.select({ web: 'text', default: undefined })}
-                      enterKeyHint={Platform.select({ web: 'search', default: undefined })}
-                    />
-                    <Ionicons name="search" size={22} color="#111827" style={styles.searchIconRight} />
-                  </View>
+                {/* Underline search field + recents */}
+                {inputOpen && (
+                  <View>
+                    <View style={[styles.searchUnderline, inputFocused && styles.searchUnderlineFocused]}>
+                      <TextInput
+                        ref={inputRef}
+                        autoFocus
+                        placeholder="Search: Eggs, Milk..."
+                        placeholderTextColor="#9CA3AF"
+                        value={query}
+                        onChangeText={setQuery}
+                        style={styles.inputUnderline}
+                        returnKeyType="search"
+                        onSubmitEditing={onSearch}
+                        onFocus={() => setInputFocused(true)}
+                        onBlur={() => setInputFocused(false)}
+                        inputMode={Platform.select({ web: 'text', default: undefined })}
+                        enterKeyHint={Platform.select({ web: 'search', default: undefined })}
+                      />
+                      <Ionicons name="search" size={22} color="#111827" style={styles.searchIconRight} />
+                    </View>
 
-                  {/* Recents */}
-                  <View style={[styles.rowBetween, { marginTop: 30 }]}>
-                    <Text style={styles.sectionLabel}>Recent Searches</Text>
-                    {recents.length > 0 && (
-                      <Pressable onPress={clearRecents} {...webOnly({ role: 'button' })}>
-                        <Text style={[styles.link, webOnly({ cursor: 'pointer' })]}>Clear</Text>
-                      </Pressable>
+                    {/* Recents */}
+                    <View style={[styles.rowBetween, { marginTop: 30 }]}>
+                      <Text style={styles.sectionLabel}>Recent Searches</Text>
+                      {recents.length > 0 && (
+                        <Pressable onPress={clearRecents} {...webOnly({ role: 'button' })}>
+                          <Text style={[styles.link, webOnly({ cursor: 'pointer' })]}>Clear</Text>
+                        </Pressable>
+                      )}
+                    </View>
+
+                    {recents.length === 0 ? (
+                      <Text style={styles.emptyText}>No search history yet</Text>
+                    ) : (
+                      <View style={{ marginTop: 6 }}>
+                        {recents.map((item, i) => (
+                          <Pressable
+                            key={`${item}-${i}`}
+                            style={({ pressed }) => [styles.recentPillRow, pressed && { opacity: 0.95 }]}
+                            onPress={() => { setQuery(item); onSearch(); }}
+                            {...webOnly({ role: 'button' })}
+                          >
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                              <Ionicons name="time-outline" size={16} color="#6B7280" style={webOnly({ marginRight: 8 })} />
+                              <Text style={styles.recentPillText}>{item}</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+                          </Pressable>
+                        ))}
+                      </View>
                     )}
                   </View>
-
-                  {recents.length === 0 ? (
-                    <Text style={styles.emptyText}>No search history yet</Text>
-                  ) : (
-                    <View style={{ marginTop: 6 }}>
-                      {recents.map((item, i) => (
-                        <Pressable
-                          key={`${item}-${i}`}
-                          style={({ pressed }) => [styles.recentPillRow, pressed && { opacity: 0.95 }]}
-                          onPress={() => { setQuery(item); onSearch(); }}
-                          {...webOnly({ role: 'button' })}
-                        >
-                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="time-outline" size={16} color="#6B7280" style={webOnly({ marginRight: 8 })} />
-                            <Text style={styles.recentPillText}>{item}</Text>
-                          </View>
-                          <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-                        </Pressable>
-                      ))}
-                    </View>
-                  )}
-                </View>
-              )}
-            </View>
+                )}
+                {!!errorMsg && <Text style={{ color: '#DC2626', marginTop: 10 }}>{errorMsg}</Text>}
+              </View>
+            )}
           </ScrollView>
         </KeyboardAvoidingView>
 
@@ -339,79 +348,166 @@ export default function PairScreen() {
             </Text>
           </Pressable>
         </View>
-
-        {/* Result/Error Modal — NOW SHOWS EVERYTHING */}
-        <Modal
-          visible={modalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.modalBackdrop}>
-            <View style={styles.modalCard}>
-              {errorMsg ? (
-                <>
-                  <Text style={styles.modalTitle}>Hmm…</Text>
-                  <Text style={styles.modalText}>{errorMsg}</Text>
-                </>
-              ) : result ? (
-                <>
-                  <Text style={styles.modalTitle}>{result.ingredient || query}</Text>
-                  <Text style={styles.modalSub}>
-                    {result.category ? `Category: ${result.category}` : 'Category: —'}
-                  </Text>
-
-                  {/* Counts */}
-                  <View style={styles.modalRow}>
-                    <Badge color="#16A34A" bg="#ECFDF5" label={`Recommended: ${result.beneficial?.length ?? 0}`} />
-                    <Badge color="#DC2626" bg="#FEF2F2" label={`Avoid: ${result.avoid?.length ?? 0}`} />
-                  </View>
-
-                  {/* Scrollable detail list */}
-                  <View style={{ maxHeight: 380, marginTop: 12 }}>
-                    <ScrollView
-                      style={{ paddingRight: 2 }}
-                      contentContainerStyle={{ paddingBottom: 8 }}
-                      showsVerticalScrollIndicator
-                    >
-                      {/* Recommended section (if present) */}
-                      {Array.isArray(result.beneficial) && result.beneficial.length > 0 && (
-                        <Section title="Recommended">
-                          {result.beneficial.map((item, idx) => (
-                            <FoodRow key={`b-${idx}`} item={item} tone="good" />
-                          ))}
-                        </Section>
-                      )}
-
-                      {/* Avoid section (if present) */}
-                      {Array.isArray(result.avoid) && result.avoid.length > 0 && (
-                        <Section title="Avoid">
-                          {result.avoid.map((item, idx) => (
-                            <FoodRow key={`a-${idx}`} item={item} tone="bad" />
-                          ))}
-                        </Section>
-                      )}
-
-                      {/* No items fallback */}
-                      {!result.avoid?.length && !result.beneficial?.length && (
-                        <Text style={styles.modalText}>No detailed items returned.</Text>
-                      )}
-                    </ScrollView>
-                  </View>
-                </>
-              ) : (
-                <Text style={styles.modalText}>No data.</Text>
-              )}
-
-              <View style={{ height: 10 }} />
-              <Pressable style={styles.modalBtn} onPress={() => setModalVisible(false)}>
-                <Text style={styles.modalBtnText}>OK</Text>
-              </Pressable>
-            </View>
-          </View>
-        </Modal>
       </View>
     </SafeAreaView>
+  );
+}
+
+/** ===== Helpers for results rendering (inline) ===== */
+
+function getHeaderTone(res: CompatibilityResponse, filter: Filter | null) {
+  if (filter === 'avoid' && (res.avoid?.length ?? 0) > 0) return 'bad';
+  if ((res.beneficial?.length ?? 0) > 0) return 'good';
+  if ((res.avoid?.length ?? 0) > 0) return 'bad';
+  return 'neutral';
+}
+
+type Row = CompatibilityItem & { _kind: 'good' | 'bad' };
+
+function rowsFromResult(res: CompatibilityResponse, filter: Filter | null): Row[] {
+  const goods: Row[] = (res.beneficial ?? []).map(x => ({ ...x, _kind: 'good' as const }));
+  const bads:  Row[] = (res.avoid ?? []).map(x => ({ ...x, _kind: 'bad'  as const }));
+
+  // sort each bucket: severity desc, then name asc (stable & predictable)
+  const bySeverity = (a: CompatibilityItem, b: CompatibilityItem) =>
+    (b.severity ?? 0) - (a.severity ?? 0) || (a.food || '').localeCompare(b.food || '', undefined, { sensitivity: 'base' });
+
+  goods.sort(bySeverity);
+  bads.sort(bySeverity);
+
+  // return according to filter
+  if (filter === 'benefit') return goods;
+  if (filter === 'avoid')   return bads;
+
+  // 'all' (or null): Good group first, then Bad group
+  return [...goods, ...bads];
+}
+
+function ResultView({
+  result,
+  filter,
+  query,
+  onBack,
+}: {
+  result: CompatibilityResponse;
+  filter: Filter | null;
+  query: string;
+  onBack: () => void;
+}) {
+  const rows = rowsFromResult(result, filter);
+
+  const tone = getHeaderTone(result, filter);
+  const showBadge = tone !== 'neutral';
+  const isGood = tone === 'good';
+
+  return (
+    <View style={[styles.bigCard, { paddingBottom: 16, minHeight: undefined }]}>
+      {/* Back chip */}
+      <Pressable
+        onPress={onBack}
+        style={{ alignSelf: 'flex-start', padding: 8, borderRadius: 999, backgroundColor: '#F3F4F6', marginBottom: 8 }}
+      >
+        <Ionicons name="chevron-back" size={20} color="#111827" />
+      </Pressable>
+
+      {filter === 'all' ? (
+  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+    {!!(result.beneficial?.length) && (
+      <View style={{
+        alignSelf: 'flex-start',
+        paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1,
+        backgroundColor: '#ECFDF5', borderColor: '#16A34A',
+      }}>
+        <Text style={{ color: '#16A34A', fontWeight: '600' }}>Good</Text>
+      </View>
+    )}
+    {!!(result.avoid?.length) && (
+      <View style={{
+        alignSelf: 'flex-start',
+        paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1,
+        backgroundColor: '#FEF2F2', borderColor: '#DC2626',
+      }}>
+        <Text style={{ color: '#DC2626', fontWeight: '600' }}>Avoid</Text>
+      </View>
+    )}
+  </View>
+) : (
+  showBadge && (
+    <View style={{
+      alignSelf: 'flex-start',
+      paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1,
+      backgroundColor: isGood ? '#ECFDF5' : '#FEF2F2',
+      borderColor: isGood ? '#16A34A' : '#DC2626',
+      marginBottom: 10,
+    }}>
+      <Text style={{ color: isGood ? '#16A34A' : '#DC2626', fontWeight: '600' }}>
+        {isGood ? '🌱 Good' : '⚠ Avoid'}
+      </Text>
+    </View>
+  )
+)}
+
+
+      
+
+      {/* Title */}
+      <Text style={[styles.headerTitle, { textAlign: 'center' }]}>
+        pairings with{'\n'}
+        <Text style={{ textDecorationLine: 'underline' }}>{result.ingredient || query}</Text>
+      </Text>
+
+      {/* Accordion list */}
+      <ResultAccordion rows={rows} />
+    </View>
+  );
+}
+
+function ResultAccordion({ rows }: { rows: Row[] }) {
+  const [open, setOpen] = useState<number | null>(rows.length ? 0 : null);
+  return (
+    <View style={{ marginTop: 16 }}>
+      {rows.map((r, idx) => {
+        const isOpen = open === idx;
+        const color  = r._kind === 'good' ? '#16A34A' : '#DC2626';
+        const icon   = r._kind === 'good' ? 'checkmark-circle' : 'close-circle';
+        return (
+          <View key={`${r.food}-${idx}`} style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 10, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E5E7EB' }}>
+            <Pressable
+              onPress={() => setOpen(isOpen ? null : idx)}
+              style={{ paddingHorizontal: 12, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name={icon as any} size={18} color={color} />
+                <Text style={{ fontSize: 15, fontWeight: '700', color: '#0F172A' }}>{r.food}</Text>
+              </View>
+              <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={18} color="#6B7280" />
+            </Pressable>
+
+            {isOpen && (
+              <View style={{ paddingHorizontal: 12, paddingBottom: 14 }}>
+                <Text style={{ fontSize: 14, color: '#374151' }}>{r.reason}</Text>
+                {Array.isArray(r.sources) && r.sources.length > 0 && (
+                  <View style={{ marginTop: 8, gap: 4 }}>
+                    {r.sources.map((s, i) => (
+                      <Pressable
+                        key={`${s.label}-${i}`}
+                        onPress={() => s.url && Linking.openURL(s.url)}
+                        disabled={!s.url}
+                        style={({ pressed }) => pressed && s.url ? { opacity: 0.85 } : undefined}
+                      >
+                        <Text style={[styles.sourceLine, !s.url && { color: '#6B7280' }]}>
+                          • {s.label}{s.url ? '  ↗' : ''}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
@@ -559,16 +655,6 @@ const styles = StyleSheet.create({
   segmentTextActive: {
     color: '#111827',
   },
-  tabPill: { backgroundColor: '#E9EBEF', paddingVertical: 10, paddingHorizontal: 18, borderRadius: 12 },
-  tabPillActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  tabText: { fontSize: 16, fontWeight: '600', color: '#6B7280' },
-  tabTextActive: { color: '#111827' },
 
   // one big card
   bigCard: {
@@ -613,6 +699,7 @@ const styles = StyleSheet.create({
     height: 68,
     alignSelf: 'center',
   },
+
   // arrow row
   arrowRow: {
     marginTop: 8,
@@ -627,7 +714,7 @@ const styles = StyleSheet.create({
       cursor: 'pointer',
     }),
   },
-  arrowTitle: { fontSize: 30, color: '#0F172A', fontFamily: 'PretendardJP-Light', },
+  arrowTitle: { fontSize: 30, color: '#0F172A', fontFamily: 'PretendardJP-Light' },
 
   /** Underline search field */
   searchUnderline: {
@@ -719,26 +806,7 @@ const styles = StyleSheet.create({
   searchTextOn: { color: '#FFFFFF' },
   searchTextOff: { color: '#9CA3AF' },
 
-  // Modal
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(17, 24, 39, 0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 520,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 18,
-  },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: '#0F172A' },
-  modalSub: { fontSize: 14, color: '#6B7280', marginTop: 4 },
-  modalText: { fontSize: 15, color: '#111827' },
-  modalRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
-
+  // Modal badge/shared
   badge: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1 },
   badgeText: { fontSize: 13, fontWeight: '700' },
 
@@ -754,14 +822,4 @@ const styles = StyleSheet.create({
   foodName: { fontSize: 15, fontWeight: '800', color: '#0F172A' },
   foodReason: { fontSize: 14, color: '#374151', marginTop: 6 },
   sourceLine: { fontSize: 13, color: '#2563EB' },
-
-  modalBtn: {
-    marginTop: 14,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#111827',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15 },
 });
