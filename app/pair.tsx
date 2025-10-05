@@ -59,7 +59,7 @@ export default function PairScreen() {
   const [result, setResult] = useState<CompatibilityResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // NEW: segmented active state (pairing or wellness)
+  // segmented active state (pairing or wellness)
   const [activeSeg, setActiveSeg] = useState<'pairing' | 'wellness'>('pairing');
 
   // focus ref
@@ -131,10 +131,9 @@ export default function PairScreen() {
 
       const data: CompatibilityResponse = await res.json();
       setResult(data); // show inline (no modal)
-      setActiveSeg('pairing'); // keep "Pairing" selected like your screenshot
+      setActiveSeg('pairing'); // keep "Pairing" selected
     } catch (err: any) {
       setErrorMsg(err?.name === 'AbortError' ? 'Request timed out' : (err?.message || 'Something went wrong'));
-      // show the error inline too
       setResult(null);
     } finally {
       clearTimeout(timeout);
@@ -221,6 +220,7 @@ export default function PairScreen() {
                 result={result}
                 filter={filter}
                 query={query}
+                cardMinHeight={cardMinHeight}
                 onBack={() => { setResult(null); ClearAll(); }}
               />
             ) : (
@@ -387,11 +387,13 @@ function ResultView({
   result,
   filter,
   query,
+  cardMinHeight,
   onBack,
 }: {
   result: CompatibilityResponse;
   filter: Filter | null;
   query: string;
+  cardMinHeight: number;
   onBack: () => void;
 }) {
   const rows = rowsFromResult(result, filter);
@@ -401,99 +403,100 @@ function ResultView({
   const isGood = tone === 'good';
 
   return (
-    <View style={[styles.bigCard, { paddingBottom: 16, minHeight: undefined }]}>
+    <View style={[styles.bigCard, { paddingTop: 60, paddingBottom: 16, minHeight: cardMinHeight }]}>
       {/* Back chip */}
-      <Pressable onPress={onBack} style={{ alignSelf: 'flex-start', padding: 8, marginTop: 10, borderRadius: 999, backgroundColor: '#F3F4F6', marginBottom: 8 }} > <Ionicons name="chevron-back" size={20} color="#111827" /> </Pressable>
-
-      <Text style={[styles.title, { textAlign: 'center' }]}>
-        pairings with{'\n'}
-        <Text style={{ textDecorationLine: 'underline' }}>{result.ingredient || query}</Text>
-      </Text>
-
-      {(filter === 'all' || filter == null) ? (
-  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
-    {!!(result.beneficial?.length) && (
-      <View
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 6,
-          paddingVertical: 6,
-          paddingHorizontal: 12,
-          borderRadius: 12,
-          borderWidth: 1,
-          backgroundColor: '#ECFDF5',
-          borderColor: '#16A34A',
-        }}
+      <Pressable
+        onPress={onBack}
+        style={{ alignSelf: 'flex-start', padding: 8, borderRadius: 999, backgroundColor: '#F3F4F6', marginBottom: 8 }}
       >
-        <Ionicons name="checkmark-circle" size={16} color="#16A34A" />
-        <Text style={{ color: '#16A34A', textAlign: 'center' }}>
-          Recommended
-        </Text>
-      </View>
-    )}
-    {!!(result.avoid?.length) && (
-      <View
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 6,
-          paddingVertical: 6,
-          paddingHorizontal: 12,
-          borderRadius: 12,
-          borderWidth: 1,
-          backgroundColor: '#FEF2F2',
-          borderColor: '#DC2626',
-        }}
-      >
-        <Ionicons name="close-circle" size={16} color="#DC2626" />
-        <Text style={{ color: '#DC2626',  textAlign: 'center' }}>
-          Avoid
-        </Text>
-      </View>
-    )}
-  </View>
-) : (
-  showBadge && (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 12,
-        borderWidth: 1,
-        backgroundColor: isGood ? '#ECFDF5' : '#FEF2F2',
-        borderColor: isGood ? '#16A34A' : '#DC2626',
-        marginBottom: 10,
-      }}
-    >
-      <Ionicons
-        name={isGood ? 'checkmark-circle' : 'close-circle'}
-        size={16}
-        color={isGood ? '#16A34A' : '#DC2626'}
-      />
-      <Text style={{ color: isGood ? '#16A34A' : '#DC2626', textAlign: 'center' }}>
-        {isGood ? 'Recommended' : 'Avoid'}
-      </Text>
-    </View>
-  )
-)}
-
-
-
-
-      
+        <Ionicons name="chevron-back" size={20} color="#111827" />
+      </Pressable>
 
       {/* Title */}
-   
+      <Text style={[styles.title, { textAlign: 'center' }]}>
+        pairings with{'\n'}
+        <Text style={{ textDecorationLine: 'underline' }}>
+          {result.ingredient || query}
+        </Text>
+      </Text>
+
+      {/* Badges */}
+      {(filter === 'all' || filter == null) ? (
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+          {!!(result.beneficial?.length) && (
+            <View
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                paddingVertical: 6,
+                paddingHorizontal: 12,
+                borderRadius: 12,
+                borderWidth: 1,
+                backgroundColor: '#ECFDF5',
+                borderColor: '#16A34A',
+              }}
+            >
+              <Ionicons name="checkmark-circle" size={16} color="#16A34A" />
+              <Text style={{ color: '#16A34A', textAlign: 'center' }}>
+                Recommended
+              </Text>
+            </View>
+          )}
+          {!!(result.avoid?.length) && (
+            <View
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                paddingVertical: 6,
+                paddingHorizontal: 12,
+                borderRadius: 12,
+                borderWidth: 1,
+                backgroundColor: '#FEF2F2',
+                borderColor: '#DC2626',
+              }}
+            >
+              <Ionicons name="close-circle" size={16} color="#DC2626" />
+              <Text style={{ color: '#DC2626', textAlign: 'center' }}>
+                Avoid
+              </Text>
+            </View>
+          )}
+        </View>
+      ) : (
+        showBadge && (
+          <View
+            style={{
+              alignSelf: 'flex-start',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              borderRadius: 12,
+              borderWidth: 1,
+              backgroundColor: isGood ? '#ECFDF5' : '#FEF2F2',
+              borderColor: isGood ? '#16A34A' : '#DC2626',
+              marginBottom: 10,
+            }}
+          >
+            <Ionicons
+              name={isGood ? 'checkmark-circle' : 'close-circle'}
+              size={16}
+              color={isGood ? '#16A34A' : '#DC2626'}
+            />
+            <Text style={{ color: isGood ? '#16A34A' : '#DC2626', textAlign: 'center' }}>
+              {isGood ? 'Recommended' : 'Avoid'}
+            </Text>
+          </View>
+        )
+      )}
 
       {/* Accordion list */}
       <ResultAccordion rows={rows} />
@@ -502,21 +505,37 @@ function ResultView({
 }
 
 function ResultAccordion({ rows }: { rows: Row[] }) {
-  const [open, setOpen] = useState<number | null>(null);
+  const [open, setOpen] = useState<number | null>(null); // all closed by default
   return (
     <View style={{ marginTop: 16 }}>
       {rows.map((r, idx) => {
         const isOpen = open === idx;
         const color  = r._kind === 'good' ? '#16A34A' : '#DC2626';
-        const icon = r._kind === 'good'
-  ? (isOpen ? 'checkmark-circle' : 'checkmark-circle-outline')
-  : (isOpen ? 'close-circle' : 'close-circle-outline');
+        const icon   = r._kind === 'good'
+          ? (isOpen ? 'checkmark-circle' : 'checkmark-circle-outline')
+          : (isOpen ? 'close-circle' : 'close-circle-outline');
 
         return (
-          <View key={`${r.food}-${idx}`} style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 10, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E5E7EB' }}>
+          <View
+            key={`${r.food}-${idx}`}
+            style={{
+              borderRadius: 12,
+              overflow: 'hidden',
+              marginBottom: 10,
+              backgroundColor: '#FFF',
+              borderWidth: 1,
+              borderColor: '#E5E7EB'
+            }}
+          >
             <Pressable
               onPress={() => setOpen(isOpen ? null : idx)}
-              style={{ paddingHorizontal: 12, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Ionicons name={icon as any} size={18} color={color} />
@@ -703,7 +722,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingHorizontal: 20,
-   
     marginTop: 12,
     shadowColor: '#000',
     shadowOpacity: 0.06,
@@ -713,8 +731,8 @@ const styles = StyleSheet.create({
   },
 
   // header
-  headerTitle: { fontSize: 30,  paddingTop: 60, color: '#0F172A', fontFamily: 'PretendardJP-Light' },
-  title: { fontSize: 30, color: '#0F172A', fontFamily: 'PretendardJP-Light', marginBottom: 25},
+  headerTitle: { fontSize: 30, paddingTop: 60, color: '#0F172A', fontFamily: 'PretendardJP-Light' },
+  title: { fontSize: 30, color: '#0F172A', fontFamily: 'PretendardJP-Light', marginBottom: 25 },
 
   // chips
   chipsRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
@@ -777,8 +795,15 @@ const styles = StyleSheet.create({
     paddingRight: 36,
     paddingLeft: 0,
     paddingVertical: 0,
-    ...Platform.select({ web: { outlineStyle: 'none', caretColor: '#111827' } }),
+    ...Platform.select({
+      web: {
+        outlineWidth: 0,          // hide outline
+        outlineColor: 'transparent',
+        caretColor: '#111827',
+      },
+    }),
   },
+  
   searchIconRight: {
     position: 'absolute',
     right: 0,
