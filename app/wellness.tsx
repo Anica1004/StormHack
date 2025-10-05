@@ -189,10 +189,14 @@ export default function WellnessScreen() {
       ? 'Search: period, fatigue, digestion…'
       : 'Search: diabetes, hypertension…';
 
-  const promptCopy =
-    mode === 'daily'
-      ? 'find ingredients for daily wellness'
-      : 'find ingredients for chronic care';
+      const promptCopy =
+      mode === 'daily'
+        ? 'find ingredients for daily wellness'
+        : mode === 'chronic'
+          ? 'find ingredients for chronic care'
+          : 'find ingredients for...';
+    
+
 
   return (
     <SafeAreaView style={styles.safe} edges={['top','left','right','bottom']}>
@@ -312,6 +316,7 @@ export default function WellnessScreen() {
                 >
                   <Text style={styles.bigPromptText}>{promptCopy}</Text>
                   <Ionicons name="arrow-forward" size={22} color="#111827" />
+            
                 </Pressable>
 
                 {/* Rounded search input */}
@@ -335,36 +340,41 @@ export default function WellnessScreen() {
                   </View>
                 )}
 
-                {/* Recents */}
-                <View style={[styles.rowBetween, { marginTop: 26 }]}>
-                  <Text style={styles.sectionLabel}>Recent Searches</Text>
-                  {recents.length > 0 && (
-                    <Pressable onPress={clearRecents} {...webOnly({ role: 'button' })}>
-                      <Text style={[styles.link, webOnly({ cursor: 'pointer' })]}>Clear</Text>
-                    </Pressable>
-                  )}
-                </View>
+               {/* Recents — only show when input is open */}
+{inputOpen && (
+  <>
+    <View style={[styles.rowBetween, { marginTop: 26 }]}>
+      <Text style={styles.sectionLabel}>Recent Searches</Text>
+      {recents.length > 0 && (
+        <Pressable onPress={clearRecents} {...webOnly({ role: 'button' })}>
+          <Text style={[styles.link, webOnly({ cursor: 'pointer' })]}>Clear</Text>
+        </Pressable>
+      )}
+    </View>
 
-                {recents.length === 0 ? (
-                  <Text style={styles.emptyText}>No search history yet</Text>
-                ) : (
-                  <View style={{ marginTop: 6 }}>
-                    {recents.map((item, i) => (
-                      <Pressable
-                        key={`${item}-${i}`}
-                        style={({ pressed }) => [styles.recentPillRow, pressed && { opacity: 0.95 }]}
-                        onPress={() => { setQuery(item); onSearch(); }}
-                        {...webOnly({ role: 'button' })}
-                      >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Ionicons name="time-outline" size={16} color="#6B7280" style={webOnly({ marginRight: 8 })} />
-                          <Text style={styles.recentPillText}>{item}</Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-                      </Pressable>
-                    ))}
-                  </View>
-                )}
+    {recents.length === 0 ? (
+      <Text style={styles.emptyText}>No search history yet</Text>
+    ) : (
+      <View style={{ marginTop: 6 }}>
+        {recents.map((item, i) => (
+          <Pressable
+            key={`${item}-${i}`}
+            style={({ pressed }) => [styles.recentPillRow, pressed && { opacity: 0.95 }]}
+            onPress={() => { setQuery(item); onSearch(); }}
+            {...webOnly({ role: 'button' })}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="time-outline" size={16} color="#6B7280" style={webOnly({ marginRight: 8 })} />
+              <Text style={styles.recentPillText}>{item}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+          </Pressable>
+        ))}
+      </View>
+    )}
+  </>
+)}
+
 
                 {!!errorMsg && <Text style={{ color: '#DC2626', marginTop: 10 }}>{errorMsg}</Text>}
               </View>
