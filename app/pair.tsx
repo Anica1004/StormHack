@@ -403,7 +403,7 @@ function ResultView({
   return (
     <View style={[styles.bigCard, { paddingBottom: 16, minHeight: undefined }]}>
       {/* Back chip */}
-      <Pressable onPress={onBack} style={{ alignSelf: 'flex-start', padding: 8, marginTop: 5, borderRadius: 999, backgroundColor: '#F3F4F6', marginBottom: 8 }} > <Ionicons name="chevron-back" size={20} color="#111827" /> </Pressable>
+      <Pressable onPress={onBack} style={{ alignSelf: 'flex-start', padding: 8, marginTop: 10, borderRadius: 999, backgroundColor: '#F3F4F6', marginBottom: 8 }} > <Ionicons name="chevron-back" size={20} color="#111827" /> </Pressable>
 
       <Text style={[styles.title, { textAlign: 'center' }]}>
         pairings with{'\n'}
