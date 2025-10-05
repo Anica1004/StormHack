@@ -53,7 +53,7 @@ export default function WellnessScreen() {
   const [activeSeg, setActiveSeg] = useState<'pairing' | 'wellness'>('wellness');
 
   // demo mode (doesn't affect API, only placeholder/prompt)
-  const [mode, setMode] = useState<Mode>('daily');
+  const [mode, setMode] = useState<Mode>();
 
   // filter & search
   const [filter, setFilter] = useState<Filter | null>('all');
