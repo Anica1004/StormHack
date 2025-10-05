@@ -1,0 +1,15 @@
+name,description,type
+Iron-deficiency anemia,"Too little iron to make healthy red blood cells, causing tiredness and pale skin.",chronic
+Osteoporosis,"Bones become thin and fragile, increasing the risk of fractures.",chronic
+Hypertriglyceridemia,"Triglyceride fat levels in the blood are too high, raising heart disease risk.",chronic
+Diabetes,Blood sugar stays too high because the body doesn’t make or use insulin properly.,chronic
+Hypertension,Persistently high blood pressure that strains the heart and blood vessels.,chronic
+Gastroesophageal reflux disease (GERD),"Stomach acid flows back into the esophagus, causing heartburn and irritation.",chronic
+Gout,"A type of arthritis from high uric acid that triggers sudden, painful joint swelling (often the big toe).",chronic
+Cold,"A common viral infection with runny nose, cough, sore throat, and mild fever.",temporary
+Constipation,"Infrequent, hard, or difficult bowel movements.",temporary
+Fatigue,Ongoing tiredness or low energy that doesn’t improve with rest.,temporary
+Diarrhea,"Frequent, loose, watery stools.",temporary
+Sore throat,"Pain or scratchiness in the throat, worse when swallowing.",temporary
+Indigestion,"Upper-belly discomfort—bloating, burning, or fullness—after eating.",temporary
+Nausea,An uneasy feeling that you might vomit.,temporary

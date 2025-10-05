@@ -1,0 +1,41 @@
+label,url,interactionId(can be null),benefitId(can be null),diseaseIngredientId(can be null)
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,,"Spinach,Orange",
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,,"Lentils,Bell Pepper",
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,,"Chickpeas,Lemon Juice",
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,,"Kidney Beans,Beef",
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,,"Cereal,Orange Juice",
+NIH ODS – Calcium (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Calcium-HealthProfessional/,,"Tofu,Salmon",
+NIH ODS – Vitamin D (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/VitaminD-HealthProfessional/,,"Milk,Egg",
+NIH ODS – Vitamin K (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/VitaminK-HealthProfessional/,,"Kale,Olive Oil",
+NIH ODS – Vitamin A & Carotenoids (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/VitaminA-HealthProfessional/,,"Carrot,Olive Oil",
+EFSA – Vitamins & Minerals,https://www.efsa.europa.eu/en/topics/topic/vitamins-and-minerals,,"Tomato,Olive Oil",
+NIH ODS – Calcium (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Calcium-HealthProfessional/,"Spinach,Milk",,
+NIH ODS – Calcium (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Calcium-HealthProfessional/,"Spinach,Tofu",,
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,"Milk,Spinach",,
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,"Milk,Lentils",,
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,"Milk,Chickpeas",,
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,"Milk,Kidney Beans",,
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,"Milk,Cereal",,
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,"Milk,Beef",,
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,"Tofu,Lentils",,
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,"Tofu,Chickpeas",,
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,,,"Iron-deficiency anemia,Cereal"
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,,,"Iron-deficiency anemia,Orange Juice"
+NIH ODS – Vitamin D (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/VitaminD-HealthProfessional/,,,"Osteoporosis,Salmon"
+NIH ODS – Calcium (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Calcium-HealthProfessional/,,,"Osteoporosis,Milk"
+American Heart Association – Fish & Omega‑3,https://www.heart.org/en/healthy-living/healthy-eating/eat-smart/fats/fish-and-omega-3-fatty-acids,,,"Hypertriglyceridemia,Salmon"
+American Diabetes Association – Carbohydrates & diabetes,https://diabetes.org/food-nutrition/understanding-carbs,,,"Diabetes,Lentils"
+NHLBI – DASH Eating Plan,https://www.nhlbi.nih.gov/education/dash-eating-plan,,,"Hypertension,Kale"
+NHS – Acid reflux (heartburn): foods & lifestyle,https://www.nhs.uk/conditions/heartburn-and-acid-reflux/,,,"Gastroesophageal reflux disease (GERD),Lemon Juice"
+NHS – Gout: causes & diet,https://www.nhs.uk/conditions/gout/,,,"Gout,Beef"
+Diabetes Canada – Sugary drinks & diabetes,https://www.diabetes.ca/healthy-living-resources/diet-nutrition/sugary-drinks,,,"Diabetes,Orange Juice"
+NIH ODS – Vitamin C (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/VitaminC-HealthProfessional/,,,"Cold,Orange"
+NHS – Constipation,https://www.nhs.uk/conditions/constipation/,,,"Constipation,Lentils"
+NHS – Constipation,https://www.nhs.uk/conditions/constipation/,,,"Constipation,Chickpeas"
+NIH ODS – Iron (Health Professional Fact Sheet),https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/,,,"Fatigue,Cereal"
+NHS – Diarrhoea and vomiting,https://www.nhs.uk/conditions/diarrhoea-and-vomiting/,,,"Diarrhea,Milk"
+NHS – Diarrhoea and vomiting,https://www.nhs.uk/conditions/diarrhoea-and-vomiting/,,,"Diarrhea,Orange Juice"
+NHS – Diarrhoea and vomiting,https://www.nhs.uk/conditions/diarrhoea-and-vomiting/,,,"Diarrhea,Olive Oil"
+NHS – Sore throat,https://www.nhs.uk/conditions/sore-throat/,,,"Sore throat,Lemon Juice"
+NHS – Indigestion (dyspepsia),https://www.nhs.uk/conditions/indigestion/,,,"Indigestion,Tomato"
+NHS – Nausea and vomiting in adults,https://www.nhs.uk/conditions/nausea-and-vomiting/,,,"Nausea,Beef"

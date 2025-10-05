@@ -1,0 +1,11 @@
+ingredientAId,ingredientBId,reason
+Spinach,Milk,"Spinach contains oxalates that bind to calcium in milk, forming compounds your body cannot absorb well. This reduces how much calcium you get from the meal."
+Spinach,Tofu,"Oxalates in spinach also attach to the calcium in calcium‑set tofu, limiting the amount of calcium that can be taken up during digestion."
+Milk,Spinach,"Calcium from milk competes with non‑heme iron from spinach at the absorption stage, so taking them together can lower iron uptake from the spinach."
+Milk,Lentils,"When milk is consumed with lentils, calcium can interfere with the absorption of the lentils’ non‑heme iron, reducing the iron your body retains."
+Milk,Chickpeas,"The calcium in milk can blunt the absorption of plant‑based iron from chickpeas, which may matter for people who rely on legumes for their iron needs."
+Milk,Kidney Beans,Drinking milk with kidney beans can reduce the efficiency of non‑heme iron absorption from the beans due to calcium’s inhibitory effect.
+Milk,Cereal,"Calcium present in milk can hinder the absorption of the iron added to fortified cereal, lessening the benefit of the fortification."
+Milk,Beef,"Although beef provides well‑absorbed heme iron, calcium from milk can still interfere with iron uptake, lowering the total iron absorbed from the meal."
+Tofu,Lentils,"Calcium in tofu can reduce the absorption of non‑heme iron from lentils when eaten at the same time, diminishing iron availability."
+Tofu,Chickpeas,Eating calcium‑set tofu alongside chickpeas may lower iron absorption from the chickpeas due to calcium’s competitive effect in the intestines.

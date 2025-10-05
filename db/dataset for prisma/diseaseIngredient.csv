@@ -1,0 +1,21 @@
+diseaseId,ingredientId,type,reason
+Iron-deficiency anemia,Cereal,beneficial,Iron‑fortified cereal provides added iron that can help replenish low iron stores in iron‑deficiency anemia.
+Iron-deficiency anemia,Orange Juice,beneficial,"Vitamin C in orange juice enhances the absorption of non‑heme iron from foods and fortified products, supporting iron status."
+Osteoporosis,Salmon,beneficial,"Salmon naturally contains vitamin D, which helps the body absorb calcium and supports bone health in osteoporosis."
+Osteoporosis,Milk,beneficial,Milk is a rich source of calcium that is essential for maintaining bone mineral density in osteoporosis.
+Hypertriglyceridemia,Salmon,beneficial,Fatty fish like salmon provide omega‑3 fatty acids that can help lower blood triglyceride levels.
+Diabetes,Lentils,beneficial,"Lentils are high in fiber and have a lower glycemic impact, which helps with steadier blood sugar control in type 2 diabetes."
+Hypertension,Kale,beneficial,Vegetables such as kale contribute potassium and fit into DASH‑style eating patterns that help lower blood pressure.
+Gastroesophageal reflux disease (GERD),Lemon Juice,avoid,Citrus juices like lemon juice can aggravate reflux symptoms in many people by increasing acidity.
+Gout,Beef,avoid,Red meats such as beef contain purines that can raise uric acid and may trigger gout flares in susceptible individuals.
+Diabetes,Orange Juice,avoid,"Fruit juice is concentrated in free sugars and can cause rapid blood sugar spikes, so it is best limited with diabetes."
+Cold,Orange,beneficial,"Whole oranges provide vitamin C, which may modestly shorten the duration or lessen the severity of common cold symptoms when intake is adequate."
+Constipation,Lentils,beneficial,"Lentils are rich in dietary fiber that helps add bulk and promote regular bowel movements, which can relieve short‑term constipation."
+Constipation,Chickpeas,beneficial,"Chickpeas supply fiber that supports stool formation and bowel regularity, aiding relief of mild, short‑term constipation."
+Fatigue,Cereal,beneficial,"Iron‑fortified cereal can help improve iron intake; if tiredness is related to low iron intake, better iron status may help reduce fatigue."
+Diarrhea,Milk,avoid,"During an episode of acute diarrhea, lactose in milk can be harder to digest and may worsen symptoms in some people."
+Diarrhea,Orange Juice,avoid,"Undiluted fruit juice is high in free sugars and can draw water into the bowel, potentially making diarrhea worse."
+Diarrhea,Olive Oil,avoid,High‑fat foods like oils can slow gastric emptying and may aggravate diarrhea in the short term.
+Sore throat,Lemon Juice,avoid,"Acidic drinks such as lemon juice can sting and irritate an already inflamed throat, worsening discomfort."
+Indigestion,Tomato,avoid,"Tomatoes are acidic and can aggravate indigestion or heartburn in some people, especially during acute flare‑ups."
+Nausea,Beef,avoid,"Rich, heavy, or fatty foods like red meat can be harder to tolerate and may worsen nausea; bland, lower‑fat options are usually better temporarily."
