@@ -56,7 +56,7 @@ export default function WellnessScreen() {
   const [mode, setMode] = useState<Mode>();
 
   // filter & search
-  const [filter, setFilter] = useState<Filter | null>('all');
+  const [filter, setFilter] = useState<Filter | null>();
   const [inputOpen, setInputOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [recents, setRecents] = useState<string[]>([]);
