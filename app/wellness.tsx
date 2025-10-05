@@ -22,7 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const options = { headerShown: false };
 
-const BASE_URL = 'https://stormhack-backend-production.up.railway.app'; // same as Pairing
+const BASE_URL = 'https://stormhack-backend-production.up.railway.app';
 const STORAGE_KEY = 'eatwise:recent_wellness_searches';
 const MAX_RECENTS = 4;
 
@@ -36,7 +36,6 @@ type DiseaseItem = {
   food?: string;
   ingredient?: string;
   reason: string;
-  severity: number;
   affectedDiseases?: string[];
   sources?: SourceRef[];
 };
@@ -92,16 +91,21 @@ export default function WellnessScreen() {
 
   const persistRecents = async (next: string[]) => {
     setRecents(next);
-    try { await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {}
   };
 
   const addRecent = async (text: string) => {
-    const t = text.trim(); if (!t) return;
+    const t = text.trim();
+    if (!t) return;
     const next = [t, ...recents.filter(r => r.toLowerCase() !== t.toLowerCase())].slice(0, MAX_RECENTS);
     await persistRecents(next);
   };
 
-  const clearRecents = async () => { await persistRecents([]); };
+  const clearRecents = async () => {
+    await persistRecents([]);
+  };
 
   const apiFilter = (f: Filter | null): ApiFilter =>
     f === 'benefit' ? 'beneficial' : (f ?? 'all');
@@ -116,7 +120,10 @@ export default function WellnessScreen() {
     const list: string[] = [];
     for (const p of parts) {
       const lower = p.toLowerCase();
-      if (!seen.has(lower)) { seen.add(lower); list.push(p); }
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        list.push(p);
+      }
     }
     return list;
   }
@@ -145,7 +152,9 @@ export default function WellnessScreen() {
 
       if (!res.ok) {
         let msg: string | undefined;
-        try { msg = (await res.json())?.message; } catch {}
+        try {
+          msg = (await res.json())?.message;
+        } catch {}
         throw new Error(msg || `Request failed (${res.status})`);
       }
 
@@ -256,7 +265,6 @@ export default function WellnessScreen() {
         <KeyboardAvoidingView behavior={kavBehavior} style={{ flex: 1 }}>
           <ScrollView
             style={styles.scroll}
-            // flexGrow:1 is IMPORTANT so the white card can stretch to minHeight when content is short
             contentContainerStyle={{ paddingBottom: FOOTER_H + insets.bottom + 16, paddingTop: 8, flexGrow: 1 }}
             keyboardShouldPersistTaps="always"
           >
@@ -420,14 +428,24 @@ type Row = DiseaseItem & { _kind: 'good' | 'bad', _name: string };
 
 function rowsFromResult(res: DiseaseGuide, filter: Filter | null): Row[] {
   const nameOf = (x: DiseaseItem) => (x.food || x.ingredient || '').trim();
-  const goods: Row[] = (res.beneficial ?? []).map(x => ({ ...x, _kind: 'good' as const, _name: nameOf(x) }));
-  const bads:  Row[] = (res.avoid ?? []).map(x => ({ ...x, _kind: 'bad'  as const, _name: nameOf(x) }));
 
-  const bySeverity = (a: DiseaseItem, b: DiseaseItem) =>
-    (b.severity ?? 0) - (a.severity ?? 0) || (nameOf(a)).localeCompare(nameOf(b), undefined, { sensitivity: 'base' });
+  const goods: Row[] = (res.beneficial ?? []).map(x => ({
+    ...x,
+    _kind: 'good' as const,
+    _name: nameOf(x),
+  }));
+  const bads: Row[] = (res.avoid ?? []).map(x => ({
+    ...x,
+    _kind: 'bad' as const,
+    _name: nameOf(x),
+  }));
 
-  goods.sort(bySeverity);
-  bads.sort(bySeverity);
+  // alphabetical only, case-insensitive
+  const byName = (a: DiseaseItem, b: DiseaseItem) =>
+    nameOf(a).localeCompare(nameOf(b), undefined, { sensitivity: 'base' });
+
+  goods.sort(byName);
+  bads.sort(byName);
 
   if (filter === 'benefit') return goods;
   if (filter === 'avoid')   return bads;
@@ -580,10 +598,6 @@ function ResultAccordion({ rows }: { rows: Row[] }) {
                   </View>
                 )}
 
-                <View style={[styles.badge, { backgroundColor: r._kind === 'good' ? '#ECFDF5' : '#FEF2F2', borderColor: color, alignSelf: 'flex-start', marginTop: 8 }]}>
-                  <Text style={[styles.badgeText, { color }]}>{`Severity: ${r.severity}`}</Text>
-                </View>
-
                 {Array.isArray(r.sources) && r.sources.length > 0 && (
                   <View style={{ marginTop: 8, gap: 4 }}>
                     {r.sources.map((s, i) => (
@@ -591,7 +605,7 @@ function ResultAccordion({ rows }: { rows: Row[] }) {
                         key={`${s.label}-${i}`}
                         onPress={() => s.url && Linking.openURL(s.url)}
                         disabled={!s.url}
-                        style={({ pressed }) => pressed && s.url ? { opacity: 0.85 } : undefined}
+                        style={({ pressed }) => (pressed && s.url ? { opacity: 0.85 } : undefined)}
                       >
                         <Text style={[styles.sourceLine, !s.url && { color: '#6B7280' }]}>
                           • {s.label}{s.url ? '  ↗' : ''}
@@ -849,10 +863,6 @@ const styles = StyleSheet.create({
   searchText: { fontSize: 16, fontWeight: '700' },
   searchTextOn: { color: '#FFFFFF' },
   searchTextOff: { color: '#9CA3AF' },
-
-  // misc
-  badge: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1 },
-  badgeText: { fontSize: 13, fontWeight: '700' },
 
   // titles
   title: { fontSize: 30, color: '#0F172A', fontFamily: 'PretendardJP-Light', marginBottom: 25 },
