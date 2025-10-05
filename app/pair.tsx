@@ -69,11 +69,12 @@ export default function PairScreen() {
   const { height } = useWindowDimensions();
   const FOOTER_H = 60;
   const TABS_H = 44;
+  const [headerH, setHeaderH] = useState(0);
 
   // keep white card height stable
   const cardMinHeight = Math.max(
     0,
-    height - insets.top - insets.bottom - FOOTER_H - TABS_H - 16
+    height - insets.top - insets.bottom - FOOTER_H - headerH - 12 
   );
 
   useEffect(() => {
@@ -171,6 +172,8 @@ export default function PairScreen() {
     <SafeAreaView style={styles.safe} edges={['top','left','right','bottom']}>
       <View style={styles.container}>
 
+
+<View  onLayout={e => setHeaderH(e.nativeEvent.layout.height)}>
     {/* Logo row */}
 <View style={styles.logoWrap}>
   <Image
@@ -204,16 +207,17 @@ export default function PairScreen() {
     <Text style={styles.segmentText}>Wellness</Text>
   </Pressable>
 </View>
+</View>
 
 
         <KeyboardAvoidingView behavior={kavBehavior} style={{ flex: 1 }}>
           <ScrollView
             style={styles.scroll}
-            contentContainerStyle={{ paddingBottom: FOOTER_H + insets.bottom + 12, flexGrow: 1 }}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 8 }} 
             keyboardShouldPersistTaps="always"
           >
             {/* ONE big white card fixed to screen height */}
-            <View style={[styles.bigCard, { minHeight: cardMinHeight }]}>
+            <View style={[styles.bigCard, { minHeight: cardMinHeight}]}>
               {/* Title */}
               <Text style={styles.headerTitle}>Help me find</Text>
               <Text style={{ fontSize: 15, color: '#6B7280', marginTop: 6, fontFamily: 'PretendardJP-Light' }}>
@@ -571,7 +575,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingHorizontal: 20,
-    paddingVertical: 60,
+    paddingTop: 60,
     marginTop: 12,
     shadowColor: '#000',
     shadowOpacity: 0.06,
