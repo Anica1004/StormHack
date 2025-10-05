@@ -187,14 +187,24 @@ export default function PairScreen() {
 
 
         {/* Tabs */}
-        <View style={styles.topTabs}>
-          <Pressable style={[styles.tabPill, styles.tabPillActive]} {...webOnly({ role: 'button' })}>
-            <Text style={[styles.tabText, styles.tabTextActive]}>Pairing</Text>
-          </Pressable>
-          <Pressable style={styles.tabPill} onPress={() => router.push('/wellness')} {...webOnly({ role: 'button' })}>
-            <Text style={styles.tabText}>Wellness</Text>
-          </Pressable>
-        </View>
+        {/* Segmented toggle: Pairing / Wellness */}
+<View style={styles.segmented}>
+  <Pressable
+    style={[styles.segment, styles.segmentActive]}
+    // you're already on this screen
+    disabled
+  >
+    <Text style={[styles.segmentText, styles.segmentTextActive]}>Pairing</Text>
+  </Pressable>
+
+  <Pressable
+    style={styles.segment}
+    onPress={() => router.push('/wellness')}
+  >
+    <Text style={styles.segmentText}>Wellness</Text>
+  </Pressable>
+</View>
+
 
         <KeyboardAvoidingView behavior={kavBehavior} style={{ flex: 1 }}>
           <ScrollView
@@ -321,7 +331,7 @@ export default function PairScreen() {
               <Ionicons name="search" size={18} color={canSearch ? '#FFFFFF' : '#9CA3AF'} />
             )}
             <Text style={[styles.searchText, canSearch ? styles.searchTextOn : styles.searchTextOff]}>
-              {filter === 'avoid' ? 'Search Avoid' : filter === 'benefit' ? 'Search Recommended' : 'Search'}
+              Search
             </Text>
           </Pressable>
         </View>
@@ -513,14 +523,37 @@ const styles = StyleSheet.create({
   scroll: { flex: 1, paddingHorizontal: 20 },
 
   // tabs
-  topTabs: {
+  segmented: {
     flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingTop:0,
-    paddingBottom: 8,
     alignSelf: 'center',
-    ...webOnly({ WebkitTapHighlightColor: 'transparent' }),
+    backgroundColor: '#E9EBEF',
+    padding: 4,
+    borderRadius: 16,
+    gap: 6,
+    marginBottom: 8,
+  },
+  segment: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+  },
+  segmentActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  segmentText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  segmentTextActive: {
+    color: '#111827',
   },
   tabPill: { backgroundColor: '#E9EBEF', paddingVertical: 10, paddingHorizontal: 18, borderRadius: 12 },
   tabPillActive: {
