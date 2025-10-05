@@ -1,4 +1,22 @@
 -- =====================
+-- EVIDENCE_LEVEL
+-- =====================
+CREATE TABLE IF NOT EXISTS evidence_level (
+  score  SMALLINT PRIMARY KEY,  -- 0..5
+  label  TEXT NOT NULL
+);
+
+--default seed
+INSERT INTO evidence_level(score,label) VALUES
+  (5,'Guideline'),
+  (4,'Strong (Systematic Review / RCT)'),
+  (3,'Moderate (Observational)'),
+  (2,'Limited (Expert Opinion)'),
+  (1,'Minimal / Unspecified'),
+  (0,'No Source')
+ON CONFLICT (score) DO NOTHING;
+
+-- =====================
 -- Main entity: INGREDIENT
 -- =====================
 CREATE TABLE IF NOT EXISTS ingredient (
@@ -56,10 +74,10 @@ CREATE TABLE IF NOT EXISTS interaction (
   b_id         BIGINT NOT NULL, 				-- referenced entity id
   itype        TEXT, 							-- interaction type (optional label)
   rationale    TEXT,							 -- reasoning/description
-  severity     SMALLINT,						 -- severity level (0–5 range)
+  evidence	   SMALLINT NOT NULL DEFAULT 0 REFERENCES evidence_level(score), -- evidence level (0-5)
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT chk_interaction_severity_range CHECK (severity IS NULL OR (severity BETWEEN 0 AND 5))
+  CONSTRAINT chk_interaction_evidence CHECK (evidence BETWEEN 0 AND 5)
 );
 
 -- =====================
