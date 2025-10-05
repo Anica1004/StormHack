@@ -204,6 +204,64 @@ export default function WellnessScreen() {
       ? 'Ingredients for chronic care'
       : 'Ingredients for...';
 
+      type RecipeIngredient = { item: string; quantity?: string };
+      type Recipe = { title: string; servings?: number; ingredients: RecipeIngredient[]; steps: string[] };
+      
+      function coerceRecipeFromAI(any: any): Recipe | null {
+        if (!any) return null;
+      
+        // 1) OpenAI classic
+        if (Array.isArray(any?.choices) && any.choices[0]?.message?.content) {
+          const content = any.choices[0].message.content;
+          try { any = JSON.parse(content); } catch { any = content; }
+        }
+      
+        // 2) Wrapper with "message"
+        if (any?.message !== undefined) {
+          const m = any.message;
+          if (typeof m === 'string') {
+            try { any = JSON.parse(m); } catch { any = m; }
+          } else if (m && typeof m === 'object') {
+            any = m;
+          }
+        }
+      
+        // 3) Wrapper with "content"
+        if (typeof any?.content === 'string') {
+          try { any = JSON.parse(any.content); } catch { /* leave as string */ }
+        }
+      
+        // 4) If it’s still a string, try once more
+        if (typeof any === 'string') {
+          try { any = JSON.parse(any); } catch { return null; }
+        }
+      
+        // Some backends return { data: {...} } or { recipe: {...} }
+        if (any?.data) any = any.data;
+        if (any?.recipe) any = any.recipe;
+      
+        // Normalize ingredients to [{item, quantity?}]
+        const ok =
+          any &&
+          typeof any.title === 'string' &&
+          Array.isArray(any.ingredients) &&
+          Array.isArray(any.steps);
+      
+        if (!ok) return null;
+      
+        const ing: RecipeIngredient[] = any.ingredients.map((g: any) =>
+          typeof g === 'string' ? { item: g } : { item: String(g.item ?? ''), quantity: g.quantity ? String(g.quantity) : undefined }
+        );
+      
+        return {
+          title: any.title,
+          servings: typeof any.servings === 'number' ? any.servings : undefined,
+          ingredients: ing,
+          steps: any.steps.map((s: any) => String(s)),
+        };
+      }
+      
+
   return (
     <SafeAreaView style={styles.safe} edges={['top','left','right','bottom']}>
       <View style={{ flex: 1 }}>
@@ -306,36 +364,23 @@ export default function WellnessScreen() {
                     setDebugStatus(res.status);
                     const raw = await res.text();
                     setDebugRaw(raw);
-
+                    
                     if (!res.ok) throw new Error(`AI error ${res.status}: ${raw}`);
-
-                    // Parse possible shapes
+                    
+                    // Try to parse whatever the backend sent
                     let parsed: any;
-                    try { parsed = JSON.parse(raw); } catch { throw new Error('Could not parse AI JSON. See Debug Output below.'); }
-
-                    let recipeObj: any = parsed;
-
-                    if (Array.isArray(parsed?.choices) && parsed.choices[0]?.message?.content) {
-                      const content = parsed.choices[0].message.content;
-                      try { recipeObj = JSON.parse(content); } catch { recipeObj = content; }
-                    } else if (typeof parsed?.content === 'string') {
-                      try { recipeObj = JSON.parse(parsed.content); } catch { recipeObj = parsed.content; }
+                    try { parsed = JSON.parse(raw); } catch {
+                      // If server returned plain text, wrap it so the helper can try to parse
+                      parsed = { message: raw };
                     }
-
-                    if (typeof recipeObj === 'string') {
-                      try { recipeObj = JSON.parse(recipeObj); } catch { throw new Error('AI returned non-JSON text. See Debug Output below.'); }
-                    }
-
-                    if (!recipeObj?.title || !Array.isArray(recipeObj?.ingredients) || !Array.isArray(recipeObj?.steps)) {
+                    
+                    const recipeObj = coerceRecipeFromAI(parsed);
+                    if (!recipeObj) {
                       throw new Error('AI returned unexpected format. See Debug Output below.');
                     }
-
-                    setRecipe({
-                      title: recipeObj.title,
-                      servings: recipeObj.servings,
-                      ingredients: recipeObj.ingredients,
-                      steps: recipeObj.steps,
-                    } as Recipe);
+                    
+                    setRecipe(recipeObj);
+                    
                   } catch (e: any) {
                     setRecipeErr(e?.message || 'Recipe generation failed.');
                   } finally {
