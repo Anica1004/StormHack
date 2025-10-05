@@ -57,7 +57,7 @@ export default function WellnessScreen() {
   const [mode, setMode] = useState<Mode>();
 
   // filter & search
-  const [filter, setFilter] = useState<Filter | null>('all');
+  const [filter, setFilter] = useState<Filter | null>();
   const [inputOpen, setInputOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [recents, setRecents] = useState<string[]>([]);
@@ -271,7 +271,7 @@ export default function WellnessScreen() {
               />
             ) : (
               <View style={[styles.card, { minHeight: cardMinHeight }]}>
-                <Text style={styles.kicker}>For my</Text>
+                <Text style={styles.kicker}>I want help with</Text>
 
                 {/* Demo-only mode (placeholder/prompt copy only) */}
                 <View style={[styles.modeRow, { marginBottom: 0 }]}>
