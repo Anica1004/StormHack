@@ -1,6 +1,8 @@
 # EatWise
 **Evidence-based ingredient pairings and condition-friendly foods — simple, trustworthy, and actionable.**
 
+![Image](https://github.com/user-attachments/assets/add5e85a-5f56-4bc7-80cb-aad57a3a2ef6)
+
 ---
 
 ## Inspiration
