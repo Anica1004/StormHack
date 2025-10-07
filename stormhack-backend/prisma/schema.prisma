@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Ingredient {
+  id               String                  @id @default(cuid())
+  name             String                  @unique
+  category         String?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  diseaseRelations DiseaseIngredient[]
+  beneficialWith   IngredientBenefit[]     @relation("BenefitA")
+  beneficialFor    IngredientBenefit[]     @relation("BenefitB")
+  avoidsWith       IngredientInteraction[] @relation("IngredientA")
+  avoidedBy        IngredientInteraction[] @relation("IngredientB")
+}
+
+model IngredientInteraction {
+  id            String     @id @default(cuid())
+  ingredientAId String
+  ingredientBId String
+  reason        String
+  severity      Int        @default(3)
+  createdAt     DateTime   @default(now())
+  ingredientA   Ingredient @relation("IngredientA", fields: [ingredientAId], references: [id], onDelete: Cascade)
+  ingredientB   Ingredient @relation("IngredientB", fields: [ingredientBId], references: [id], onDelete: Cascade)
+  sources       Source[]
+
+  @@unique([ingredientAId, ingredientBId])
+}
+
+model IngredientBenefit {
+  id            String     @id @default(cuid())
+  ingredientAId String
+  ingredientBId String
+  reason        String
+  severity      Int        @default(2)
+  createdAt     DateTime   @default(now())
+  ingredientA   Ingredient @relation("BenefitA", fields: [ingredientAId], references: [id], onDelete: Cascade)
+  ingredientB   Ingredient @relation("BenefitB", fields: [ingredientBId], references: [id], onDelete: Cascade)
+  sources       Source[]
+
+  @@unique([ingredientAId, ingredientBId])
+}
+
+model Disease {
+  id          String              @id @default(cuid())
+  name        String              @unique
+  description String?
+  type        String              @default("chronic") // "chronic" or "acute"
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  ingredients DiseaseIngredient[]
+}
+
+model DiseaseIngredient {
+  id           String     @id @default(cuid())
+  diseaseId    String
+  ingredientId String
+  type         String
+  reason       String
+  severity     Int        @default(3)
+  createdAt    DateTime   @default(now())
+  disease      Disease    @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  sources      Source[]
+
+  @@unique([diseaseId, ingredientId, type])
+}
+
+model Source {
+  id                  String                 @id @default(cuid())
+  label               String
+  url                 String?
+  interactionId       String?
+  benefitId           String?
+  diseaseIngredientId String?
+  benefit             IngredientBenefit?     @relation(fields: [benefitId], references: [id], onDelete: Cascade)
+  diseaseIngredient   DiseaseIngredient?     @relation(fields: [diseaseIngredientId], references: [id], onDelete: Cascade)
+  interaction         IngredientInteraction? @relation(fields: [interactionId], references: [id], onDelete: Cascade)
+}
